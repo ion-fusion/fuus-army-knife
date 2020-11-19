@@ -1,0 +1,100 @@
+// Copyright Ion Fusion contributors. All Rights Reserved.
+WHITESPACE = { (" " | "\t" | NEWLINE)+ }
+
+COMMENT = { line_comment | block_comment }
+    line_comment = @{ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+    block_comment = @{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+UNDERSCORE_SEP_DIGITS = @{ (ASCII_DIGIT+ ~ ("_" ~ ASCII_DIGIT+)*)+ }
+UNDERSCORE_SEP_HEX = @{ (ASCII_HEX_DIGIT+ ~ ("_" ~ ASCII_HEX_DIGIT+)*)+ }
+UNDERSCORE_SEP_BIN = @{ (ASCII_BIN_DIGIT+ ~ ("_" ~ ASCII_BIN_DIGIT+)*)+ }
+
+annotations = { (annotation)+ }
+    annotation = @{ !null ~ (SYMBOL_IDENT | SYMBOL_QUOTE) ~ WHITESPACE? ~ "::" ~ WHITESPACE? }
+
+null = @{
+    ("null." ~ (
+        "blob" | "clob" | "bool" | "int" | "list" |
+        "decimal" | "float" | "symbol" | "string" |
+        "timestamp" | "sexp" | "struct"
+    )) | (!"null." ~ "null")
+}
+
+blob = @{ "{{" ~ (!"}}" ~ ANY)* ~ "}}" }
+clob = @{ "{{" ~ WHITESPACE? ~ ((SHORT_STRING | LONG_STRING) ~ WHITESPACE?)+ ~ WHITESPACE? ~ "}}" }
+
+boolean = @{ "true" | "false" }
+
+integer = @{ HEX_INT | BINARY_INT | DECIMAL_INT }
+    DECIMAL_INT = @{
+        ("-"? ~ (!("0" | "_") ~ UNDERSCORE_SEP_DIGITS) ~ UNDERSCORE_SEP_DIGITS? ~ !"_") |
+        ("-"? ~ "0" ~ !("x" | "b" | UNDERSCORE_SEP_DIGITS))
+    }
+    HEX_INT = @{ "0x" ~ UNDERSCORE_SEP_HEX }
+    BINARY_INT = @{ "0b" ~ UNDERSCORE_SEP_BIN }
+
+list = { ("[" ~ (expr ~ ("," ~ expr)*)? ~ ","? ~ "]") }
+
+real = @{
+    (DECIMAL_INT ~ ("d" | "D" | "e" | "E") ~ DECIMAL_INT ~ !"_") |
+    (DECIMAL_INT ~ "." ~ UNDERSCORE_SEP_DIGITS ~ ("d" | "D" | "e" | "E") ~ DECIMAL_INT ~ !"_") |
+    (DECIMAL_INT ~ "." ~ UNDERSCORE_SEP_DIGITS ~ !"_") |
+    (DECIMAL_INT ~ "." ~ !("_" | UNDERSCORE_SEP_DIGITS))
+}
+
+symbol = @{ SYMBOL_IDENT | SYMBOL_QUOTE }
+    SYMBOL_OPERATOR_CHARS = @{
+        "!" | "#" | "%" | "&" | "*" | "+" | "-" | "." | "/" | ";" |
+        "<" | "=" | ">" | "?" | "@" | "^" | "`" | "|" | "~"
+    }
+    SYMBOL_FIRST_CHAR = @{ ASCII_ALPHA | "_" | SYMBOL_OPERATOR_CHARS }
+    SYMBOL_TAIL_CHARS = @{ ASCII_ALPHANUMERIC | "_" | SYMBOL_OPERATOR_CHARS }
+    SYMBOL_IDENT = @{ SYMBOL_FIRST_CHAR ~ SYMBOL_TAIL_CHARS* }
+    SYMBOL_QUOTE = @{ "'" ~ SYMBOL_QUOTE_INNER ~ "'" }
+    SYMBOL_QUOTE_INNER = @{ SYMBOL_QUOTE_CHAR* }
+    SYMBOL_QUOTE_CHAR = @{ !("'" | "\\") ~ ANY | "\\'" }
+
+string = @{ SHORT_STRING | LONG_STRING }
+    SHORT_STRING = @{ "\"" ~ SHORT_STRING_INNER ~ "\"" }
+    SHORT_STRING_INNER = @{ SHORT_STRING_CHAR* }
+    SHORT_STRING_CHAR = @{
+        !("\"" | "\\" | NEWLINE) ~ ANY |
+        ("\\" ~ ("\"" | "n" | "r" | "t" | "u" | "0" | "a" | "b" | "f" | "v" | "'" | "?" | "\\" | "/" | "NL" | "x"))
+    }
+    LONG_STRING = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''" }
+
+timestamp = @{ TIMESTAMP }
+    TIMESTAMP = @{
+        ((TS_YMD ~ TS_SEP ~ (TS_HMSM | TS_HMS | TS_HM | TS_H)) |
+         (TS_YMD ~ TS_SEP?) |
+         TS_YM |
+         TS_Y) ~ !ASCII_DIGIT
+    }
+    TS_Y = @{ TS_YEAR ~ TS_SEP }
+    TS_YM = @{ TS_YEAR ~ "-" ~ TS_MONTH ~ TS_SEP }
+    TS_YMD = @{ TS_YEAR ~ "-" ~ TS_MONTH ~ "-" ~ TS_DAY }
+    TS_H = @{ TS_HOUR ~ TS_SUFFIX }
+    TS_HM = @{ TS_HOUR ~ ":" ~ TS_MINUTE ~ TS_SUFFIX }
+    TS_HMS = @{ TS_HOUR ~ ":" ~ TS_MINUTE ~ ":" ~ TS_SECOND ~ TS_SUFFIX }
+    TS_HMSM = @{ TS_HOUR ~ ":" ~ TS_MINUTE ~ ":" ~ TS_SECOND ~ "." ~ TS_MILLI ~ TS_SUFFIX }
+    TS_YEAR = @{ ASCII_DIGIT{4} }
+    TS_MONTH = @{ ASCII_DIGIT{2} }
+    TS_DAY = @{ ASCII_DIGIT{2} }
+    TS_HOUR = @{ ASCII_DIGIT{2} }
+    TS_MINUTE = @{ ASCII_DIGIT{2} }
+    TS_SECOND = @{ ASCII_DIGIT{2} }
+    TS_MILLI = @{ ASCII_DIGIT{1,3} }
+    TS_OFFSET = @{ ("+" | "-") ~ TS_HOUR ~ ":" ~ TS_MINUTE }
+    TS_UTC = @{ "Z" }
+    TS_SUFFIX = @{ TS_UTC | TS_OFFSET }
+    TS_SEP = @{ "T" }
+
+sexpr = { "(" ~ (expr)* ~ ")" }
+
+structure = { "{" ~ struct_member_list? ~ "}" }
+    struct_member_list = { struct_member ~ ("," ~ struct_member)* ~ ","? }
+    struct_member = { (SHORT_STRING | SYMBOL_IDENT | SYMBOL_QUOTE) ~ ":" ~ expr }
+
+expr = { annotations? ~ (null | list | structure | clob | blob | boolean | timestamp | real | integer | sexpr | string | symbol) }
+
+file = { SOI ~ (expr)* ~ EOI }
