@@ -1,9 +1,13 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+use pest::iterators::{Pair, Pairs};
 use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
 pub struct FusionLexer;
+
+pub type FPair<'i> = Pair<'i, Rule>;
+pub type FPairs<'i> = Pairs<'i, Rule>;
 
 #[cfg(test)]
 mod lexer_tests {

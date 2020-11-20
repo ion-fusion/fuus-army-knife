@@ -1,7 +1,8 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 WHITESPACE = { (" " | "\t" | NEWLINE)+ }
 
-COMMENT = { line_comment | block_comment }
+COMMENT = { any_comment }
+    any_comment = _{ line_comment | block_comment }
     line_comment = @{ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
     block_comment = @{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
@@ -20,8 +21,10 @@ null = @{
     )) | (!"null." ~ "null")
 }
 
-blob = @{ "{{" ~ (!"}}" ~ ANY)* ~ "}}" }
-clob = @{ "{{" ~ WHITESPACE? ~ ((SHORT_STRING | LONG_STRING) ~ WHITESPACE?)+ ~ WHITESPACE? ~ "}}" }
+blob = ${ "{{" ~ BLOB_INNER ~ "}}" }
+    BLOB_INNER = @{ BLOB_INNER_CHAR+ }
+    BLOB_INNER_CHAR = @{ (!"}}" ~ ANY) }
+clob = ${ "{{" ~ WHITESPACE? ~ (string ~ WHITESPACE?)+ ~ WHITESPACE? ~ "}}" }
 
 boolean = @{ "true" | "false" }
 
@@ -54,14 +57,16 @@ symbol = @{ SYMBOL_IDENT | SYMBOL_QUOTE }
     SYMBOL_QUOTE_INNER = @{ SYMBOL_QUOTE_CHAR* }
     SYMBOL_QUOTE_CHAR = @{ !("'" | "\\") ~ ANY | "\\'" }
 
-string = @{ SHORT_STRING | LONG_STRING }
-    SHORT_STRING = @{ "\"" ~ SHORT_STRING_INNER ~ "\"" }
+string = { SHORT_STRING | LONG_STRING }
+    SHORT_STRING = ${ "\"" ~ SHORT_STRING_INNER ~ "\"" }
     SHORT_STRING_INNER = @{ SHORT_STRING_CHAR* }
     SHORT_STRING_CHAR = @{
         !("\"" | "\\" | NEWLINE) ~ ANY |
         ("\\" ~ ("\"" | "n" | "r" | "t" | "u" | "0" | "a" | "b" | "f" | "v" | "'" | "?" | "\\" | "/" | "NL" | "x"))
     }
-    LONG_STRING = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''" }
+    LONG_STRING = ${ "'''" ~ LONG_STRING_INNER ~ "'''" }
+    LONG_STRING_INNER = @{ LONG_STRING_CHAR* }
+    LONG_STRING_CHAR = @{ !"'''" ~ ANY }
 
 timestamp = @{ TIMESTAMP }
     TIMESTAMP = @{
@@ -92,8 +97,9 @@ timestamp = @{ TIMESTAMP }
 sexpr = { "(" ~ (expr)* ~ ")" }
 
 structure = { "{" ~ struct_member_list? ~ "}" }
-    struct_member_list = { struct_member ~ ("," ~ struct_member)* ~ ","? }
-    struct_member = { (SHORT_STRING | SYMBOL_IDENT | SYMBOL_QUOTE) ~ ":" ~ expr }
+    struct_member_list = _{ struct_member ~ ("," ~ struct_member)* ~ ","? }
+    struct_member = { struct_key ~ ":" ~ expr }
+    struct_key = ${ SHORT_STRING | SYMBOL_IDENT | SYMBOL_QUOTE }
 
 expr = { annotations? ~ (null | list | structure | clob | blob | boolean | timestamp | real | integer | sexpr | string | symbol) }
 

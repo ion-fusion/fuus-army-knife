@@ -5,12 +5,14 @@
 extern crate serde_derive;
 
 mod ast;
+mod config;
 mod error;
 mod lexer;
 mod parser;
 mod validate;
 
 use crate::ast::Expr;
+use crate::config::{FusionConfig, DEFAULT_CONFIG};
 use clap::{App, Arg};
 use std::path::{Path, PathBuf};
 use toml::Value;
@@ -25,9 +27,6 @@ macro_rules! fail {
     };
 }
 
-#[derive(Deserialize)]
-struct FusionConfig {}
-
 struct FusionFileContent {
     file_name: PathBuf,
     contents: String,
@@ -39,9 +38,9 @@ pub struct FusionFile<'i> {
 }
 
 fn main() {
-    let matches = App::new("Fsuion Auto Formatter")
+    let matches = App::new("Fuus Army Knife (fuusak)")
         .version("0.1")
-        .about("Auto-formats Fusion code")
+        .about("A Fusion auto-formatter")
         .arg(
             Arg::with_name("config")
                 .short("c")
@@ -52,15 +51,14 @@ fn main() {
         )
         .get_matches();
 
-    let config_file_name = matches
-        .value_of("config")
-        .unwrap_or_else(|| "fusion-fmt.toml");
-    let config_contents = std::fs::read_to_string(config_file_name).unwrap_or("[fusion]".into());
+    let config_file_name = matches.value_of("config").unwrap_or_else(|| "fuusak.toml");
+    let config_contents =
+        std::fs::read_to_string(config_file_name).unwrap_or(DEFAULT_CONFIG.into());
     let config = config_contents
         .parse::<Value>()
         .unwrap_or_else(|err| fail!("Failed to parse config file: {}: {}", config_file_name, err));
 
-    let _fusion_config = config
+    let fusion_config = config
         .get("fusion")
         .unwrap_or_else(|| fail!("Missing config 'fusion' top-level in {}", config_file_name))
         .clone()
@@ -96,7 +94,7 @@ fn main() {
     let mut fusion_files = Vec::new();
     for contents in &fusion_contents {
         println!("Examining {:?}...", contents.file_name);
-        match parser::parse(&contents.file_name, &contents.contents) {
+        match parser::parse(&contents.file_name, &contents.contents, &fusion_config) {
             Ok(parse_result) => {
                 let file = FusionFile {
                     file_name: &contents.file_name,
