@@ -1,4 +1,6 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+use crate::error::Error;
+use toml::Value;
 
 #[derive(Deserialize)]
 pub struct FusionConfig {
@@ -9,7 +11,7 @@ pub struct FusionConfig {
     pub preserve_newlines: bool,
 }
 
-pub const DEFAULT_CONFIG: &'static str = r#"
+const DEFAULT_CONFIG: &'static str = r#"
 [fusion]
 format_multiline_string_contents = true
 preserve_newlines = true
@@ -17,8 +19,6 @@ preserve_newlines = true
 
 #[cfg(test)]
 pub fn new_default_config() -> FusionConfig {
-    use toml::Value;
-
     DEFAULT_CONFIG
         .parse::<Value>()
         .unwrap()
@@ -27,4 +27,32 @@ pub fn new_default_config() -> FusionConfig {
         .clone()
         .try_into::<FusionConfig>()
         .unwrap()
+}
+
+pub fn load_config(config_file_name: &str) -> Result<FusionConfig, Error> {
+    let config_contents =
+        std::fs::read_to_string(config_file_name).unwrap_or(DEFAULT_CONFIG.into());
+    let config = config_contents.parse::<Value>().map_err(|err| {
+        Error::Generic(format!(
+            "Failed to parse config file: {}: {}",
+            config_file_name, err
+        ))
+    })?;
+
+    config
+        .get("fusion")
+        .ok_or_else(|| {
+            Error::Generic(format!(
+                "Missing config 'fusion' top-level in {}",
+                config_file_name
+            ))
+        })?
+        .clone()
+        .try_into::<FusionConfig>()
+        .map_err(|err| {
+            Error::Generic(format!(
+                "Failed to parse 'fusion' top-level config in {}: {}",
+                config_file_name, err
+            ))
+        })
 }

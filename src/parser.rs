@@ -44,7 +44,7 @@ fn visit_pairs<'i>(pairs: FPairs<'i>, config: &FusionConfig) -> ParseResult<'i> 
     Ok(ast)
 }
 
-fn visit_blob<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_blob<'i>(pair: FPair<'i>) -> ParseResult<'i> {
     let span = pair.as_span();
     result!(
         Blob,
@@ -212,7 +212,7 @@ fn visit_whitespace<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'
 
 fn visit_pair<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
     match pair.as_rule() {
-        Rule::blob => visit_blob(pair, config),
+        Rule::blob => visit_blob(pair),
         Rule::boolean => simple_value_node!(Boolean, pair),
         Rule::clob => visit_clob(pair, config),
         Rule::COMMENT => visit_comment(pair),
@@ -344,7 +344,6 @@ fn test_block_comment_lines() {
 mod parser_tests {
     use super::*;
     use crate::config::new_default_config;
-    use pest::Parser;
     use prettydiff::diff_lines;
 
     macro_rules! test {

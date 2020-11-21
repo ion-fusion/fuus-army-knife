@@ -7,15 +7,14 @@ extern crate serde_derive;
 mod ast;
 mod config;
 mod error;
+mod file;
 mod lexer;
 mod parser;
 mod validate;
 
-use crate::ast::Expr;
-use crate::config::{FusionConfig, DEFAULT_CONFIG};
-use clap::{App, Arg};
-use std::path::{Path, PathBuf};
-use toml::Value;
+use crate::config::{load_config, FusionConfig};
+use crate::file::FusionFileContent;
+use clap::{crate_version, App, Arg, SubCommand};
 use walkdir::WalkDir;
 
 macro_rules! fail {
@@ -27,18 +26,29 @@ macro_rules! fail {
     };
 }
 
-struct FusionFileContent {
-    file_name: PathBuf,
-    contents: String,
-}
-
-pub struct FusionFile<'i> {
-    file_name: &'i Path,
-    ast: Vec<Expr<'i>>,
-}
-
 fn main() {
-    let matches = App::new("Fuus Army Knife (fuusak)")
+    let mut clap_app = configure_clap_app();
+    let matches = clap_app.clone().get_matches();
+
+    let config_file_name = matches.value_of("config").unwrap_or_else(|| "fuusak.toml");
+    let fusion_config = load_config(config_file_name).unwrap_or_else(|error| fail!("{}", error));
+
+    if let Some(matches) = matches.subcommand_matches("debug-ast") {
+        let path = matches.value_of("FILE").unwrap();
+        subcommand_debug_ast(&fusion_config, path);
+    } else if let Some(matches) = matches.subcommand_matches("format") {
+        let path = matches.value_of("FILE").unwrap();
+        subcommand_format(&fusion_config, path);
+    } else if let Some(_) = matches.subcommand_matches("format-all") {
+        subcommand_format_all(&fusion_config);
+    } else {
+        drop(clap_app.print_help());
+        println!("\n")
+    }
+}
+
+fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
+    App::new("Fuus Army Knife (fuusak)")
         .version("0.1")
         .about("A Fusion auto-formatter")
         .arg(
@@ -49,28 +59,36 @@ fn main() {
                 .takes_value(true)
                 .help("Specifies the config file to use"),
         )
-        .get_matches();
+        .subcommand(
+            SubCommand::with_name("debug-ast")
+                .about("outputs AST of a Fusion file")
+                .arg(Arg::with_name("FILE").required(true).index(1)),
+        )
+        .subcommand(
+            SubCommand::with_name("format")
+                .about("formats a single file")
+                .arg(Arg::with_name("FILE").required(true).index(1)),
+        )
+        .subcommand(
+            SubCommand::with_name("format-all")
+                .about("recursively formats all Fusion files from the current directory"),
+        )
+        .subcommand(SubCommand::with_name("help"))
+}
 
-    let config_file_name = matches.value_of("config").unwrap_or_else(|| "fuusak.toml");
-    let config_contents =
-        std::fs::read_to_string(config_file_name).unwrap_or(DEFAULT_CONFIG.into());
-    let config = config_contents
-        .parse::<Value>()
-        .unwrap_or_else(|err| fail!("Failed to parse config file: {}: {}", config_file_name, err));
+fn subcommand_debug_ast(fusion_config: &FusionConfig, path: &str) {
+    let file_contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+    let file = file_contents
+        .parse(fusion_config)
+        .unwrap_or_else(|err| fail!("{}", err));
+    println!("AST for {}:\n\n{:#?}", path, file.ast);
+}
 
-    let fusion_config = config
-        .get("fusion")
-        .unwrap_or_else(|| fail!("Missing config 'fusion' top-level in {}", config_file_name))
-        .clone()
-        .try_into::<FusionConfig>()
-        .unwrap_or_else(|err| {
-            fail!(
-                "Failed to parse 'fusion' top-level config in {}: {}",
-                config_file_name,
-                err
-            )
-        });
+fn subcommand_format(_fusion_config: &FusionConfig, _path: &str) {
+    unimplemented!()
+}
 
+fn subcommand_format_all(fusion_config: &FusionConfig) {
     let mut fusion_contents: Vec<FusionFileContent> = Vec::new();
     let directory_walker = WalkDir::new(".")
         .follow_links(true)
@@ -81,12 +99,8 @@ fn main() {
         let extension = path.extension().and_then(|extension| extension.to_str());
         if !entry.file_type().is_dir() {
             if let Some("fusion") = extension {
-                fusion_contents.push(FusionFileContent {
-                    file_name: path.to_path_buf(),
-                    contents: std::fs::read_to_string(path).unwrap_or_else(|err| {
-                        fail!("Failed to load file {}: {}", path.display(), err)
-                    }),
-                });
+                fusion_contents
+                    .push(FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err)));
             }
         }
     }
@@ -94,29 +108,26 @@ fn main() {
     let mut fusion_files = Vec::new();
     for contents in &fusion_contents {
         println!("Examining {:?}...", contents.file_name);
-        match parser::parse(&contents.file_name, &contents.contents, &fusion_config) {
-            Ok(parse_result) => {
-                let file = FusionFile {
-                    file_name: &contents.file_name,
-                    ast: parse_result,
-                };
-                let errors = validate::validate(&file.ast);
-                if !errors.is_empty() {
-                    for error in &errors {
-                        eprintln!("  {}\n", error);
-                    }
-                    println!("  Skipping {:?}...", contents.file_name);
-                } else {
-                    fusion_files.push(file);
-                }
+        match contents.parse(fusion_config) {
+            Ok(file) => {
+                fusion_files.push(file);
             }
             Err(error) => {
-                eprintln!("{}\n", error);
+                fail!("{}", error);
             }
         }
     }
 
     for file in &fusion_files {
+        println!("Validating {:?}...", file.file_name);
+        let errors = validate::validate(&file.ast);
+        if !errors.is_empty() {
+            for error in &errors {
+                eprintln!("  {}\n", error);
+            }
+            println!("  Skipping {:?}...", file.file_name);
+        }
+
         println!("Formatting {:?}...", file.file_name);
         // TODO
     }
