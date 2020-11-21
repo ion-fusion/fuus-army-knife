@@ -1,15 +1,10 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 use pest::Span;
 
-#[derive(Debug)]
+#[derive(new, Debug)]
 pub struct NonAnnotatedValue<'i> {
     pub span: Span<'i>,
     pub value: String,
-}
-impl<'i> NonAnnotatedValue<'i> {
-    pub fn new(span: Span<'i>, value: String) -> NonAnnotatedValue<'i> {
-        NonAnnotatedValue { span, value }
-    }
 }
 
 #[derive(Debug)]
@@ -71,32 +66,17 @@ impl<'i> ExpressionsNode<'i> {
     }
 }
 
-#[derive(Debug)]
+#[derive(new, Debug)]
 pub struct NewlinesNode<'i> {
     pub span: Span<'i>,
     pub newlines: u16,
 }
-impl<'i> NewlinesNode<'i> {
-    pub fn new(span: Span<'i>, newlines: u16) -> NewlinesNode<'i> {
-        NewlinesNode { span, newlines }
-    }
-}
 
-#[derive(Debug)]
+#[derive(new, Debug)]
 pub struct StructMemberNode<'i> {
     pub span: Span<'i>,
-    pub key: Box<Expr<'i>>,
-    // It's a Vec since there can be multiple Newlines expressions embedded in there
+    // Includes the key, comments, newlines, and the member itself
     pub value: Vec<Expr<'i>>,
-}
-impl<'i> StructMemberNode<'i> {
-    pub fn new(span: Span<'i>, key: Expr<'i>, value: Vec<Expr<'i>>) -> StructMemberNode<'i> {
-        StructMemberNode {
-            span,
-            key: Box::new(key),
-            value,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -109,6 +89,7 @@ pub enum Expr<'i> {
     Integer(ValueNode<'i>),
     List(ExpressionsNode<'i>),
     MultilineString(ValuesNode<'i>),
+    Newlines(NewlinesNode<'i>),
     Null(ValueNode<'i>),
     QuotedString(ValueNode<'i>),
     Real(ValueNode<'i>),
@@ -118,7 +99,6 @@ pub enum Expr<'i> {
     StructMember(StructMemberNode<'i>),
     Symbol(ValueNode<'i>),
     Timestamp(ValueNode<'i>),
-    Newlines(NewlinesNode<'i>),
 }
 impl<'i> Expr<'i> {
     pub fn attach_annotations(mut self: Expr<'i>, annotations: Vec<String>) -> Expr<'i> {
@@ -139,5 +119,28 @@ impl<'i> Expr<'i> {
             _ => unreachable!(),
         }
         self
+    }
+
+    pub fn span<'a>(&'a self) -> &'a Span<'i> {
+        match self {
+            Expr::Blob(ref value) => &value.span,
+            Expr::Boolean(ref value) => &value.span,
+            Expr::Clob(ref value) => &value.span,
+            Expr::CommentBlock(ref value) => &value.span,
+            Expr::CommentLine(ref value) => &value.span,
+            Expr::Integer(ref value) => &value.span,
+            Expr::List(ref value) => &value.span,
+            Expr::MultilineString(ref value) => &value.span,
+            Expr::Newlines(ref value) => &value.span,
+            Expr::Null(ref value) => &value.span,
+            Expr::QuotedString(ref value) => &value.span,
+            Expr::Real(ref value) => &value.span,
+            Expr::SExpr(ref value) => &value.span,
+            Expr::Struct(ref value) => &value.span,
+            Expr::StructKey(ref value) => &value.span,
+            Expr::StructMember(ref value) => &value.span,
+            Expr::Symbol(ref value) => &value.span,
+            Expr::Timestamp(ref value) => &value.span,
+        }
     }
 }

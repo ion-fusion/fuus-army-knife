@@ -181,11 +181,8 @@ fn visit_structure_key<'i>(pair: FPair<'i>) -> ParseResult<'i> {
 
 fn visit_structure_member<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
     let span = pair.as_span();
-    let mut sub_exprs: Vec<Expr<'i>> = visit_pairs(pair.into_inner(), config)?;
-    assert!(sub_exprs.len() > 1);
-
-    let key = sub_exprs.remove(0);
-    result!(StructMember, StructMemberNode::new(span, key, sub_exprs))
+    let sub_exprs: Vec<Expr<'i>> = visit_pairs(pair.into_inner(), config)?;
+    result!(StructMember, StructMemberNode::new(span, sub_exprs))
 }
 
 fn visit_structure<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {

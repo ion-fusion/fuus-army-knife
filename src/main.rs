@@ -2,12 +2,15 @@
 #![warn(rust_2018_idioms)]
 
 #[macro_use]
+extern crate derive_new;
+#[macro_use]
 extern crate serde_derive;
 
 mod ast;
 mod config;
 mod error;
 mod file;
+mod ist;
 mod lexer;
 mod parser;
 mod validate;
@@ -36,6 +39,9 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("debug-ast") {
         let path = matches.value_of("FILE").unwrap();
         subcommand_debug_ast(&fusion_config, path);
+    } else if let Some(matches) = matches.subcommand_matches("debug-ist") {
+        let path = matches.value_of("FILE").unwrap();
+        subcommand_debug_ist(&fusion_config, path);
     } else if let Some(matches) = matches.subcommand_matches("format") {
         let path = matches.value_of("FILE").unwrap();
         subcommand_format(&fusion_config, path);
@@ -65,6 +71,11 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
                 .arg(Arg::with_name("FILE").required(true).index(1)),
         )
         .subcommand(
+            SubCommand::with_name("debug-ist")
+                .about("outputs IST of a Fusion file")
+                .arg(Arg::with_name("FILE").required(true).index(1)),
+        )
+        .subcommand(
             SubCommand::with_name("format")
                 .about("formats a single file")
                 .arg(Arg::with_name("FILE").required(true).index(1)),
@@ -81,7 +92,15 @@ fn subcommand_debug_ast(fusion_config: &FusionConfig, path: &str) {
     let file = file_contents
         .parse(fusion_config)
         .unwrap_or_else(|err| fail!("{}", err));
-    println!("AST for {}:\n\n{:#?}", path, file.ast);
+    println!("{:#?}", file.ast);
+}
+
+fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
+    let file_contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+    let file = file_contents
+        .parse(fusion_config)
+        .unwrap_or_else(|err| fail!("{}", err));
+    println!("{:#?}", file.ist.expressions);
 }
 
 fn subcommand_format(_fusion_config: &FusionConfig, _path: &str) {
