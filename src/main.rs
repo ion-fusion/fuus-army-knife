@@ -13,10 +13,11 @@ mod file;
 mod ist;
 mod lexer;
 mod parser;
+mod span;
 mod validate;
 
 use crate::config::{load_config, FusionConfig};
-use crate::file::FusionFileContent;
+use crate::file::{FusionFile, FusionFileContent};
 use clap::{crate_version, App, Arg, SubCommand};
 use walkdir::WalkDir;
 
@@ -88,11 +89,11 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
 }
 
 fn subcommand_debug_ast(fusion_config: &FusionConfig, path: &str) {
-    let file_contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
-    let file = file_contents
+    let file_content = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+    let file = file_content
         .parse(fusion_config)
         .unwrap_or_else(|err| fail!("{}", err));
-    println!("{:#?}", file.ast);
+    println!("{}", file.debug_ast());
 }
 
 fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
@@ -100,7 +101,7 @@ fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
     let file = file_contents
         .parse(fusion_config)
         .unwrap_or_else(|err| fail!("{}", err));
-    println!("{:#?}", file.ist.expressions);
+    println!("{}", file.debug_ist());
 }
 
 fn subcommand_format(_fusion_config: &FusionConfig, _path: &str) {
@@ -108,7 +109,7 @@ fn subcommand_format(_fusion_config: &FusionConfig, _path: &str) {
 }
 
 fn subcommand_format_all(fusion_config: &FusionConfig) {
-    let mut fusion_contents: Vec<FusionFileContent> = Vec::new();
+    let mut fusion_files: Vec<FusionFile> = Vec::new();
     let directory_walker = WalkDir::new(".")
         .follow_links(true)
         .sort_by(|a, b| a.file_name().cmp(b.file_name()));
@@ -118,28 +119,19 @@ fn subcommand_format_all(fusion_config: &FusionConfig) {
         let extension = path.extension().and_then(|extension| extension.to_str());
         if !entry.file_type().is_dir() {
             if let Some("fusion") = extension {
-                fusion_contents
-                    .push(FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err)));
-            }
-        }
-    }
-
-    let mut fusion_files = Vec::new();
-    for contents in &fusion_contents {
-        println!("Examining {:?}...", contents.file_name);
-        match contents.parse(fusion_config) {
-            Ok(file) => {
-                fusion_files.push(file);
-            }
-            Err(error) => {
-                fail!("{}", error);
+                println!("Examining {:?}...", path);
+                let contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+                let fusion_file = contents
+                    .parse(fusion_config)
+                    .unwrap_or_else(|err| fail!("{}", err));
+                fusion_files.push(fusion_file);
             }
         }
     }
 
     for file in &fusion_files {
         println!("Validating {:?}...", file.file_name);
-        let errors = validate::validate(&file.ast);
+        let errors = validate::validate(&file);
         if !errors.is_empty() {
             for error in &errors {
                 eprintln!("  {}\n", error);

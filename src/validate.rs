@@ -1,6 +1,6 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
-use crate::ast::*;
 use crate::error::Error;
+use crate::file::FusionFile;
 use crate::lexer::Rule;
 use pest::error::Error as PestError;
 use pest::error::ErrorVariant;
@@ -35,12 +35,12 @@ impl ErrorTracker {
     }
 }
 
-pub fn validate(ast: &Vec<Expr<'_>>) -> Vec<Error> {
+pub fn validate(file: &FusionFile) -> Vec<Error> {
     let mut tracker = ErrorTracker::new();
-    validate_unbound_ident(&mut tracker, ast);
+    validate_unbound_ident(&mut tracker, file);
     tracker.into_errors()
 }
 
-fn validate_unbound_ident(_tracker: &mut ErrorTracker, _ast: &Vec<Expr<'_>>) {
+fn validate_unbound_ident(_tracker: &mut ErrorTracker, _file: &FusionFile) {
     // TODO
 }

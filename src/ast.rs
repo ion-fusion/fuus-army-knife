@@ -1,31 +1,31 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
-use pest::Span;
+use crate::span::ShortSpan;
 
 #[derive(new, Debug)]
-pub struct NonAnnotatedValue<'i> {
-    pub span: Span<'i>,
+pub struct NonAnnotatedValue {
+    pub span: ShortSpan,
     pub value: String,
 }
 
 #[derive(Debug)]
-pub struct NonAnnotatedValues<'i> {
-    pub span: Span<'i>,
+pub struct NonAnnotatedValues {
+    pub span: ShortSpan,
     pub values: Vec<String>,
 }
-impl<'i> NonAnnotatedValues<'i> {
-    pub fn new(span: Span<'i>, values: Vec<String>) -> NonAnnotatedValues<'i> {
+impl NonAnnotatedValues {
+    pub fn new(span: ShortSpan, values: Vec<String>) -> NonAnnotatedValues {
         NonAnnotatedValues { span, values }
     }
 }
 
 #[derive(Debug)]
-pub struct ValueNode<'i> {
-    pub span: Span<'i>,
+pub struct ValueNode {
+    pub span: ShortSpan,
     pub annotations: Vec<String>,
     pub value: String,
 }
-impl<'i> ValueNode<'i> {
-    pub fn new(span: Span<'i>, value: String) -> ValueNode<'i> {
+impl ValueNode {
+    pub fn new(span: ShortSpan, value: String) -> ValueNode {
         ValueNode {
             span,
             annotations: Vec::new(),
@@ -35,13 +35,13 @@ impl<'i> ValueNode<'i> {
 }
 
 #[derive(Debug)]
-pub struct ValuesNode<'i> {
-    pub span: Span<'i>,
+pub struct ValuesNode {
+    pub span: ShortSpan,
     pub annotations: Vec<String>,
     pub value: Vec<String>,
 }
-impl<'i> ValuesNode<'i> {
-    pub fn new(span: Span<'i>, value: Vec<String>) -> ValuesNode<'i> {
+impl ValuesNode {
+    pub fn new(span: ShortSpan, value: Vec<String>) -> ValuesNode {
         ValuesNode {
             span,
             annotations: Vec::new(),
@@ -51,13 +51,13 @@ impl<'i> ValuesNode<'i> {
 }
 
 #[derive(Debug)]
-pub struct ExpressionsNode<'i> {
-    pub span: Span<'i>,
+pub struct ExpressionsNode {
+    pub span: ShortSpan,
     pub annotations: Vec<String>,
-    pub value: Vec<Expr<'i>>,
+    pub value: Vec<Expr>,
 }
-impl<'i> ExpressionsNode<'i> {
-    pub fn new(span: Span<'i>, value: Vec<Expr<'i>>) -> ExpressionsNode<'i> {
+impl ExpressionsNode {
+    pub fn new(span: ShortSpan, value: Vec<Expr>) -> ExpressionsNode {
         ExpressionsNode {
             span,
             annotations: Vec::new(),
@@ -67,41 +67,41 @@ impl<'i> ExpressionsNode<'i> {
 }
 
 #[derive(new, Debug)]
-pub struct NewlinesNode<'i> {
-    pub span: Span<'i>,
+pub struct NewlinesNode {
+    pub span: ShortSpan,
     pub newlines: u16,
 }
 
 #[derive(new, Debug)]
-pub struct StructMemberNode<'i> {
-    pub span: Span<'i>,
+pub struct StructMemberNode {
+    pub span: ShortSpan,
     // Includes the key, comments, newlines, and the member itself
-    pub value: Vec<Expr<'i>>,
+    pub value: Vec<Expr>,
 }
 
 #[derive(Debug)]
-pub enum Expr<'i> {
-    Blob(ValueNode<'i>),
-    Boolean(ValueNode<'i>),
-    Clob(ExpressionsNode<'i>),
-    CommentBlock(NonAnnotatedValues<'i>),
-    CommentLine(NonAnnotatedValue<'i>),
-    Integer(ValueNode<'i>),
-    List(ExpressionsNode<'i>),
-    MultilineString(ValuesNode<'i>),
-    Newlines(NewlinesNode<'i>),
-    Null(ValueNode<'i>),
-    QuotedString(ValueNode<'i>),
-    Real(ValueNode<'i>),
-    SExpr(ExpressionsNode<'i>),
-    Struct(ExpressionsNode<'i>),
-    StructKey(ValueNode<'i>),
-    StructMember(StructMemberNode<'i>),
-    Symbol(ValueNode<'i>),
-    Timestamp(ValueNode<'i>),
+pub enum Expr {
+    Blob(ValueNode),
+    Boolean(ValueNode),
+    Clob(ExpressionsNode),
+    CommentBlock(NonAnnotatedValues),
+    CommentLine(NonAnnotatedValue),
+    Integer(ValueNode),
+    List(ExpressionsNode),
+    MultilineString(ValuesNode),
+    Newlines(NewlinesNode),
+    Null(ValueNode),
+    QuotedString(ValueNode),
+    Real(ValueNode),
+    SExpr(ExpressionsNode),
+    Struct(ExpressionsNode),
+    StructKey(ValueNode),
+    StructMember(StructMemberNode),
+    Symbol(ValueNode),
+    Timestamp(ValueNode),
 }
-impl<'i> Expr<'i> {
-    pub fn attach_annotations(mut self: Expr<'i>, annotations: Vec<String>) -> Expr<'i> {
+impl Expr {
+    pub fn attach_annotations(mut self: Expr, annotations: Vec<String>) -> Expr {
         match &mut self {
             Expr::Blob(ref mut value) => value.annotations = annotations,
             Expr::Boolean(ref mut value) => value.annotations = annotations,
@@ -121,26 +121,26 @@ impl<'i> Expr<'i> {
         self
     }
 
-    pub fn span<'a>(&'a self) -> &'a Span<'i> {
-        match self {
-            Expr::Blob(ref value) => &value.span,
-            Expr::Boolean(ref value) => &value.span,
-            Expr::Clob(ref value) => &value.span,
-            Expr::CommentBlock(ref value) => &value.span,
-            Expr::CommentLine(ref value) => &value.span,
-            Expr::Integer(ref value) => &value.span,
-            Expr::List(ref value) => &value.span,
-            Expr::MultilineString(ref value) => &value.span,
-            Expr::Newlines(ref value) => &value.span,
-            Expr::Null(ref value) => &value.span,
-            Expr::QuotedString(ref value) => &value.span,
-            Expr::Real(ref value) => &value.span,
-            Expr::SExpr(ref value) => &value.span,
-            Expr::Struct(ref value) => &value.span,
-            Expr::StructKey(ref value) => &value.span,
-            Expr::StructMember(ref value) => &value.span,
-            Expr::Symbol(ref value) => &value.span,
-            Expr::Timestamp(ref value) => &value.span,
+    pub fn span(&self) -> ShortSpan {
+        match *self {
+            Expr::Blob(ref value) => value.span,
+            Expr::Boolean(ref value) => value.span,
+            Expr::Clob(ref value) => value.span,
+            Expr::CommentBlock(ref value) => value.span,
+            Expr::CommentLine(ref value) => value.span,
+            Expr::Integer(ref value) => value.span,
+            Expr::List(ref value) => value.span,
+            Expr::MultilineString(ref value) => value.span,
+            Expr::Newlines(ref value) => value.span,
+            Expr::Null(ref value) => value.span,
+            Expr::QuotedString(ref value) => value.span,
+            Expr::Real(ref value) => value.span,
+            Expr::SExpr(ref value) => value.span,
+            Expr::Struct(ref value) => value.span,
+            Expr::StructKey(ref value) => value.span,
+            Expr::StructMember(ref value) => value.span,
+            Expr::Symbol(ref value) => value.span,
+            Expr::Timestamp(ref value) => value.span,
         }
     }
 }

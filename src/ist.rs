@@ -1,27 +1,8 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 use crate::ast;
 use crate::error::Error;
-use pest::Span;
+use crate::span::ShortSpan;
 use std::fmt;
-
-#[derive(new, Clone, Copy, PartialEq, Eq)]
-pub struct ShortSpan {
-    pub start: usize,
-    pub end: usize,
-}
-impl From<&Span<'_>> for ShortSpan {
-    fn from(other: &Span<'_>) -> ShortSpan {
-        ShortSpan {
-            start: other.start(),
-            end: other.end(),
-        }
-    }
-}
-impl fmt::Debug for ShortSpan {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Span({}, {})", self.start, self.end)
-    }
-}
 
 #[derive(new, Debug)]
 pub struct NonAnnotatedStringData {
@@ -135,13 +116,13 @@ pub struct IntermediateSyntaxTree {
     pub expressions: Vec<IExpr>,
 }
 
-impl<'i> IntermediateSyntaxTree {
-    pub fn from_ast(from: &Vec<ast::Expr<'_>>) -> Result<IntermediateSyntaxTree, Error> {
+impl IntermediateSyntaxTree {
+    pub fn from_ast(from: &Vec<ast::Expr>) -> Result<IntermediateSyntaxTree, Error> {
         Ok(IntermediateSyntaxTree::new(visit_ast_exprs(from)?))
     }
 }
 
-fn visit_ast_exprs(exprs: &Vec<ast::Expr<'_>>) -> Result<Vec<IExpr>, Error> {
+fn visit_ast_exprs(exprs: &Vec<ast::Expr>) -> Result<Vec<IExpr>, Error> {
     exprs
         .iter()
         .map(|expr| visit_ast_expr(expr))
@@ -162,7 +143,7 @@ macro_rules! atomic_value {
     };
 }
 
-fn visit_ast_expr(expr: &ast::Expr<'_>) -> Result<IExpr, Error> {
+fn visit_ast_expr(expr: &ast::Expr) -> Result<IExpr, Error> {
     let span: ShortSpan = expr.span().into();
     match *expr {
         ast::Expr::Blob(ref value) => atomic_value!(Blob, span, value),
@@ -188,21 +169,20 @@ fn visit_ast_expr(expr: &ast::Expr<'_>) -> Result<IExpr, Error> {
     }
 }
 
-fn visit_ast_struct_member(exprs: &Vec<ast::Expr<'_>>) -> Result<Vec<StructExpr>, Error> {
+fn visit_ast_struct_member(exprs: &Vec<ast::Expr>) -> Result<Vec<StructExpr>, Error> {
     let mut ist: Vec<StructExpr> = Vec::new();
     for ast_mem in exprs {
         ist.push(match ast_mem {
-            ast::Expr::StructKey(ref key) => StructExpr::StructKey(NonAnnotatedStringData::new(
-                (&key.span).into(),
-                key.value.clone(),
-            )),
+            ast::Expr::StructKey(ref key) => {
+                StructExpr::StructKey(NonAnnotatedStringData::new(key.span, key.value.clone()))
+            }
             _ => StructExpr::StructValue(visit_ast_expr(ast_mem)?),
         })
     }
     Ok(ist)
 }
 
-fn visit_ast_struct(expr: &ast::ExpressionsNode<'_>, span: ShortSpan) -> Result<IExpr, Error> {
+fn visit_ast_struct(expr: &ast::ExpressionsNode, span: ShortSpan) -> Result<IExpr, Error> {
     let mut ist: Vec<StructExpr> = Vec::new();
     for ast_mem in &expr.value {
         match *ast_mem {
@@ -223,7 +203,7 @@ fn visit_ast_struct(expr: &ast::ExpressionsNode<'_>, span: ShortSpan) -> Result<
 }
 
 fn visit_ast_block_comment(
-    expr: &ast::NonAnnotatedValues<'_>,
+    expr: &ast::NonAnnotatedValues,
     span: ShortSpan,
 ) -> Result<IExpr, Error> {
     Ok(IExpr::CommentBlock(NonAnnotatedStringListData::new(
@@ -232,17 +212,14 @@ fn visit_ast_block_comment(
     )))
 }
 
-fn visit_ast_line_comment(
-    expr: &ast::NonAnnotatedValue<'_>,
-    span: ShortSpan,
-) -> Result<IExpr, Error> {
+fn visit_ast_line_comment(expr: &ast::NonAnnotatedValue, span: ShortSpan) -> Result<IExpr, Error> {
     Ok(IExpr::CommentLine(NonAnnotatedStringData::new(
         span,
         expr.value.clone(),
     )))
 }
 
-fn visit_ast_clob(expr: &ast::ExpressionsNode<'_>, span: ShortSpan) -> Result<IExpr, Error> {
+fn visit_ast_clob(expr: &ast::ExpressionsNode, span: ShortSpan) -> Result<IExpr, Error> {
     let ist: Vec<ClobExpr> = visit_ast_exprs(&expr.value)?
         .into_iter()
         .map(|iexpr| match iexpr {
@@ -262,7 +239,7 @@ fn visit_ast_clob(expr: &ast::ExpressionsNode<'_>, span: ShortSpan) -> Result<IE
     )))
 }
 
-fn visit_ast_multiline_string(expr: &ast::ValuesNode<'_>, span: ShortSpan) -> Result<IExpr, Error> {
+fn visit_ast_multiline_string(expr: &ast::ValuesNode, span: ShortSpan) -> Result<IExpr, Error> {
     Ok(IExpr::MultilineString(AnnotatedStringListData::new(
         span,
         expr.annotations.clone(),
@@ -270,7 +247,7 @@ fn visit_ast_multiline_string(expr: &ast::ValuesNode<'_>, span: ShortSpan) -> Re
     )))
 }
 
-fn visit_ast_list(expr: &ast::ExpressionsNode<'_>, span: ShortSpan) -> Result<IExpr, Error> {
+fn visit_ast_list(expr: &ast::ExpressionsNode, span: ShortSpan) -> Result<IExpr, Error> {
     Ok(IExpr::List(ListData::new(
         span,
         expr.annotations.clone(),
@@ -278,7 +255,7 @@ fn visit_ast_list(expr: &ast::ExpressionsNode<'_>, span: ShortSpan) -> Result<IE
     )))
 }
 
-fn visit_ast_sexpr(expr: &ast::ExpressionsNode<'_>, span: ShortSpan) -> Result<IExpr, Error> {
+fn visit_ast_sexpr(expr: &ast::ExpressionsNode, span: ShortSpan) -> Result<IExpr, Error> {
     Ok(IExpr::SExpr(ListData::new(
         span,
         expr.annotations.clone(),

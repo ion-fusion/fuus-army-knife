@@ -4,14 +4,61 @@ use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::ist::IntermediateSyntaxTree;
 use crate::parser;
+use regex::{Captures, Regex};
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
 #[derive(new)]
-pub struct FusionFile<'i> {
-    pub file_name: &'i Path,
-    pub ast: Vec<Expr<'i>>,
+pub struct FusionFile {
+    pub file_name: PathBuf,
+    pub contents: String,
+    pub ast: Vec<Expr>,
     pub ist: IntermediateSyntaxTree,
+}
+
+impl FusionFile {
+    pub fn debug_ast(&self) -> String {
+        let debug_view = format!("{:#?}", self.ast);
+        replace_spans(&self.contents, &debug_view)
+    }
+
+    pub fn debug_ist(&self) -> String {
+        let debug_view = format!("{:#?}", self.ist.expressions);
+        replace_spans(&self.contents, &debug_view)
+    }
+
+    #[cfg(test)]
+    pub fn test_file_with_ast(contents: &str, ast: Vec<Expr>) -> FusionFile {
+        FusionFile {
+            file_name: "test".into(),
+            contents: contents.into(),
+            ast,
+            ist: IntermediateSyntaxTree::new(Vec::new()),
+        }
+    }
+}
+
+fn replace_spans(file_content: &str, debug_view: &str) -> String {
+    let span_finder = Regex::new(r"\[Span\((\d+)->(\d+)\)\]").unwrap();
+    span_finder
+        .replace_all(&debug_view, |caps: &Captures| {
+            let start = caps[1].parse::<usize>().unwrap();
+            let end = caps[2].parse::<usize>().unwrap();
+            let truncate = end - start > 40;
+            let end = if truncate { start + 40 } else { end };
+
+            format!(
+                "\"{}{}\"{}",
+                (&file_content[start..end])
+                    .replace("\"", "\\\"")
+                    .replace("\t", "\\t")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r"),
+                if truncate { "..." } else { "" },
+                if truncate { " (truncated)" } else { "" }
+            )
+        })
+        .into_owned()
 }
 
 #[derive(new)]
@@ -34,7 +81,7 @@ impl FusionFileContent {
         ))
     }
 
-    pub fn parse<'i>(&'i self, fusion_config: &FusionConfig) -> Result<FusionFile<'i>, Error> {
+    pub fn parse(self, fusion_config: &FusionConfig) -> Result<FusionFile, Error> {
         let ast =
             parser::parse(&self.file_name, &self.contents, &fusion_config).map_err(|error| {
                 Error::Generic(format!("Failed to parse {:?}: {}", self.file_name, error))
@@ -46,6 +93,6 @@ impl FusionFileContent {
             ))
         })?;
 
-        Ok(FusionFile::new(&self.file_name, ast, ist))
+        Ok(FusionFile::new(self.file_name, self.contents, ast, ist))
     }
 }

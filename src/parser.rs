@@ -7,13 +7,13 @@ use pest::Parser;
 use regex::Regex;
 use std::path::Path;
 
-pub type ParseResult<'i> = Result<Vec<Expr<'i>>, Error>;
+pub type ParseResult = Result<Vec<Expr>, Error>;
 
 pub fn parse<'i, P: AsRef<Path>>(
     file_name: P,
     source: &'i str,
     config: &FusionConfig,
-) -> ParseResult<'i> {
+) -> ParseResult {
     // FusionParser::parse converts the string into a token stream using the grammar in grammar.pest.
     // The visit_pairs method then converts that token stream into the AST.
     let parse_result = FusionLexer::parse(Rule::file, source)
@@ -24,7 +24,7 @@ pub fn parse<'i, P: AsRef<Path>>(
 macro_rules! simple_value_node {
     ($expr_type:ident, $pair: ident) => {
         Ok(vec![Expr::$expr_type(ValueNode::new(
-            $pair.as_span(),
+            $pair.as_span().into(),
             $pair.as_str().into(),
         ))])
     };
@@ -36,7 +36,7 @@ macro_rules! result {
     };
 }
 
-fn visit_pairs<'i>(pairs: FPairs<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_pairs<'i>(pairs: FPairs<'i>, config: &FusionConfig) -> ParseResult {
     let mut ast = Vec::new();
     for pair in pairs {
         ast.extend(visit_pair(pair, config)?);
@@ -44,21 +44,21 @@ fn visit_pairs<'i>(pairs: FPairs<'i>, config: &FusionConfig) -> ParseResult<'i> 
     Ok(ast)
 }
 
-fn visit_blob<'i>(pair: FPair<'i>) -> ParseResult<'i> {
+fn visit_blob<'i>(pair: FPair<'i>) -> ParseResult {
     let span = pair.as_span();
     result!(
         Blob,
         ValueNode::new(
-            span,
+            span.into(),
             pair.into_inner().next().unwrap().as_str().trim().into()
         )
     )
 }
 
-fn visit_clob<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_clob<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
-    let inner_exprs: Result<Vec<Expr<'i>>, Error> = visit_pairs(pair.into_inner(), config);
-    result!(Clob, ExpressionsNode::new(span, inner_exprs?))
+    let inner_exprs: Result<Vec<Expr>, Error> = visit_pairs(pair.into_inner(), config);
+    result!(Clob, ExpressionsNode::new(span.into(), inner_exprs?))
 }
 
 fn block_comment_lines(comment: &str) -> Vec<String> {
@@ -81,7 +81,7 @@ fn block_comment_lines(comment: &str) -> Vec<String> {
         .collect()
 }
 
-fn visit_comment<'i>(pair: FPair<'i>) -> ParseResult<'i> {
+fn visit_comment<'i>(pair: FPair<'i>) -> ParseResult {
     // Unfortunately, Pest strips out all the useful information for comments,
     // so re-parse the comment without the implicit comment rule
     let span = pair.as_span();
@@ -93,24 +93,24 @@ fn visit_comment<'i>(pair: FPair<'i>) -> ParseResult<'i> {
     match reparsed.as_rule() {
         Rule::line_comment => result!(
             CommentLine,
-            NonAnnotatedValue::new(span, pair.as_str().into())
+            NonAnnotatedValue::new(span.into(), pair.as_str().into())
         ),
         Rule::block_comment => result!(
             CommentBlock,
-            NonAnnotatedValues::new(span, block_comment_lines(pair.as_str()),)
+            NonAnnotatedValues::new(span.into(), block_comment_lines(pair.as_str()),)
         ),
         _ => unreachable!(),
     }
 }
 
-fn attach_annotations<'i>(exprs: Vec<Expr<'i>>, annotations: &Vec<String>) -> Vec<Expr<'i>> {
+fn attach_annotations<'i>(exprs: Vec<Expr>, annotations: &Vec<String>) -> Vec<Expr> {
     exprs
         .into_iter()
         .map(|expr| expr.attach_annotations(annotations.clone()))
         .collect()
 }
 
-fn visit_expr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_expr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let mut pairs: Vec<FPair<'i>> = pair.into_inner().collect();
     if pairs.len() == 2 {
         // [annotation, expression]
@@ -130,25 +130,25 @@ fn visit_expr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
     }
 }
 
-fn visit_list<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_list<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
-    let sub_exprs: Vec<Expr<'i>> = visit_pairs(pair.into_inner(), config)?;
-    result!(List, ExpressionsNode::new(span, sub_exprs))
+    let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
+    result!(List, ExpressionsNode::new(span.into(), sub_exprs))
 }
 
-fn visit_sexpr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_sexpr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
-    let sub_exprs: Vec<Expr<'i>> = visit_pairs(pair.into_inner(), config)?;
-    result!(SExpr, ExpressionsNode::new(span, sub_exprs))
+    let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
+    result!(SExpr, ExpressionsNode::new(span.into(), sub_exprs))
 }
 
-fn visit_short_string<'i>(pair: FPair<'i>) -> ParseResult<'i> {
+fn visit_short_string<'i>(pair: FPair<'i>) -> ParseResult {
     let span = pair.as_span();
     let string_val = pair.into_inner().as_str().to_string();
-    result!(QuotedString, ValueNode::new(span, string_val))
+    result!(QuotedString, ValueNode::new(span.into(), string_val))
 }
 
-fn visit_long_string<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_long_string<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
     let string_val = pair.into_inner().as_str().to_string();
     let lines: Vec<String> = if config.format_multiline_string_contents {
@@ -159,10 +159,10 @@ fn visit_long_string<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<
     } else {
         string_val.lines().map(|line| line.to_string()).collect()
     };
-    result!(MultilineString, ValuesNode::new(span, lines))
+    result!(MultilineString, ValuesNode::new(span.into(), lines))
 }
 
-fn visit_string_inner<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_string_inner<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     match pair.as_rule() {
         Rule::SHORT_STRING => visit_short_string(pair),
         Rule::LONG_STRING => visit_long_string(pair, config),
@@ -170,25 +170,25 @@ fn visit_string_inner<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult
     }
 }
 
-fn visit_string<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_string<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     visit_string_inner(pair.into_inner().next().unwrap(), config)
 }
 
-fn visit_structure_key<'i>(pair: FPair<'i>) -> ParseResult<'i> {
+fn visit_structure_key<'i>(pair: FPair<'i>) -> ParseResult {
     let inner = pair.into_inner().next().unwrap();
     simple_value_node!(StructKey, inner)
 }
 
-fn visit_structure_member<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_structure_member<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
-    let sub_exprs: Vec<Expr<'i>> = visit_pairs(pair.into_inner(), config)?;
-    result!(StructMember, StructMemberNode::new(span, sub_exprs))
+    let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
+    result!(StructMember, StructMemberNode::new(span.into(), sub_exprs))
 }
 
-fn visit_structure<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_structure<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
-    let sub_exprs: Vec<Expr<'i>> = visit_pairs(pair.into_inner(), config)?;
-    result!(Struct, ExpressionsNode::new(span, sub_exprs))
+    let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
+    result!(Struct, ExpressionsNode::new(span.into(), sub_exprs))
 }
 
 fn count_newlines(input: &str) -> usize {
@@ -196,18 +196,21 @@ fn count_newlines(input: &str) -> usize {
     newline_regex.find_iter(input).count()
 }
 
-fn visit_whitespace<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_whitespace<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     if config.preserve_newlines {
         let span = pair.as_span();
         let newline_count = count_newlines(span.as_str());
         if newline_count > 0 {
-            return result!(Newlines, NewlinesNode::new(span, newline_count as u16));
+            return result!(
+                Newlines,
+                NewlinesNode::new(span.into(), newline_count as u16)
+            );
         }
     }
     Ok(Vec::new())
 }
 
-fn visit_pair<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult<'i> {
+fn visit_pair<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     match pair.as_rule() {
         Rule::blob => visit_blob(pair),
         Rule::boolean => simple_value_node!(Boolean, pair),
@@ -341,6 +344,7 @@ fn test_block_comment_lines() {
 mod parser_tests {
     use super::*;
     use crate::config::new_default_config;
+    use crate::file::FusionFile;
     use prettydiff::diff_lines;
 
     macro_rules! test {
@@ -351,7 +355,8 @@ mod parser_tests {
             if let Err(error) = result {
                 assert!(false, "Error: {}", error);
             } else {
-                let actual_output = format!("{:#?}", result.unwrap());
+                let file = FusionFile::test_file_with_ast(input, result.unwrap());
+                let actual_output = file.debug_ast();
                 if expected_output != &actual_output {
                     let msg = format!(
                         "\nProcessing of {} didn't match expected output in {}:\n{}\n",
