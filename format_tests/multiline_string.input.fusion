@@ -1,0 +1,34 @@
+'''foo bar'''
+
+'''foo
+'''
+
+'''
+
+foo
+  bar
+    baz
+
+'''
+
+
+(define foo '''
+foo
+''')
+
+(define foo '''
+            foo
+              bar
+                biz
+            baz
+            ''')
+
+(define (foo a b)
+         '''
+         some description of foo
+
+         with an example:
+
+           (foo 1 2)
+         '''
+  (some code))

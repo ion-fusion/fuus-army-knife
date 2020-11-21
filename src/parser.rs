@@ -3,8 +3,9 @@ use crate::ast::*;
 use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::lexer::{FPair, FPairs, FusionLexer, Rule};
+use crate::span::ShortSpan;
+use crate::string_util::count_newlines;
 use pest::Parser;
-use regex::Regex;
 use std::path::Path;
 
 pub type ParseResult = Result<Vec<Expr>, Error>;
@@ -84,20 +85,23 @@ fn block_comment_lines(comment: &str) -> Vec<String> {
 fn visit_comment<'i>(pair: FPair<'i>) -> ParseResult {
     // Unfortunately, Pest strips out all the useful information for comments,
     // so re-parse the comment without the implicit comment rule
-    let span = pair.as_span();
-    let comment = span.as_str();
+    let comment = pair.as_span().as_str();
+    let span: ShortSpan = pair.as_span().into();
 
     let reparsed = FusionLexer::parse(Rule::any_comment, comment)?
         .next()
         .unwrap();
     match reparsed.as_rule() {
-        Rule::line_comment => result!(
-            CommentLine,
-            NonAnnotatedValue::new(span.into(), pair.as_str().into())
-        ),
+        Rule::line_comment => Ok(vec![
+            Expr::CommentLine(NonAnnotatedValue::new(
+                span,
+                pair.as_str().trim_end().into(),
+            )),
+            Expr::Newlines(NewlinesNode::new(span, 1)),
+        ]),
         Rule::block_comment => result!(
             CommentBlock,
-            NonAnnotatedValues::new(span.into(), block_comment_lines(pair.as_str()),)
+            NonAnnotatedValues::new(span, block_comment_lines(pair.as_str()),)
         ),
         _ => unreachable!(),
     }
@@ -148,30 +152,22 @@ fn visit_short_string<'i>(pair: FPair<'i>) -> ParseResult {
     result!(QuotedString, ValueNode::new(span.into(), string_val))
 }
 
-fn visit_long_string<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
+fn visit_long_string<'i>(pair: FPair<'i>) -> ParseResult {
     let span = pair.as_span();
     let string_val = pair.into_inner().as_str().to_string();
-    let lines: Vec<String> = if config.format_multiline_string_contents {
-        string_val
-            .lines()
-            .map(|line| line.trim().to_string())
-            .collect()
-    } else {
-        string_val.lines().map(|line| line.to_string()).collect()
-    };
-    result!(MultilineString, ValuesNode::new(span.into(), lines))
+    result!(MultilineString, ValueNode::new(span.into(), string_val))
 }
 
-fn visit_string_inner<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
+fn visit_string_inner<'i>(pair: FPair<'i>) -> ParseResult {
     match pair.as_rule() {
         Rule::SHORT_STRING => visit_short_string(pair),
-        Rule::LONG_STRING => visit_long_string(pair, config),
+        Rule::LONG_STRING => visit_long_string(pair),
         _ => unreachable!("visit_string_inner with {:?}", pair),
     }
 }
 
-fn visit_string<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
-    visit_string_inner(pair.into_inner().next().unwrap(), config)
+fn visit_string<'i>(pair: FPair<'i>) -> ParseResult {
+    visit_string_inner(pair.into_inner().next().unwrap())
 }
 
 fn visit_structure_key<'i>(pair: FPair<'i>) -> ParseResult {
@@ -189,11 +185,6 @@ fn visit_structure<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
     let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
     result!(Struct, ExpressionsNode::new(span.into(), sub_exprs))
-}
-
-fn count_newlines(input: &str) -> usize {
-    let newline_regex = Regex::new(r"\r\n?|\n").unwrap();
-    newline_regex.find_iter(input).count()
 }
 
 fn visit_whitespace<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
@@ -222,7 +213,7 @@ fn visit_pair<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
         Rule::null => simple_value_node!(Null, pair),
         Rule::real => simple_value_node!(Real, pair),
         Rule::sexpr => visit_sexpr(pair, config),
-        Rule::string => visit_string(pair, config),
+        Rule::string => visit_string(pair),
         Rule::structure => visit_structure(pair, config),
         Rule::struct_key => visit_structure_key(pair),
         Rule::struct_member => visit_structure_member(pair, config),
@@ -346,7 +337,7 @@ mod parser_tests {
     use super::*;
     use crate::config::new_default_config;
     use crate::file::FusionFile;
-    use prettydiff::diff_lines;
+    use crate::test_util::human_diff_lines;
 
     macro_rules! test {
         ($input:expr, $output:expr) => {
@@ -363,7 +354,7 @@ mod parser_tests {
                         "\nProcessing of {} didn't match expected output in {}:\n{}\n",
                         $input,
                         $output,
-                        diff_lines(expected_output, &actual_output)
+                        human_diff_lines(expected_output, actual_output)
                     );
                     assert!(false, msg);
                 }

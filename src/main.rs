@@ -10,10 +10,14 @@ mod ast;
 mod config;
 mod error;
 mod file;
+mod format;
 mod ist;
 mod lexer;
 mod parser;
 mod span;
+mod string_util;
+#[cfg(test)]
+mod test_util;
 mod validate;
 
 use crate::config::{load_config, FusionConfig};
@@ -104,8 +108,12 @@ fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
     println!("{}", file.debug_ist());
 }
 
-fn subcommand_format(_fusion_config: &FusionConfig, _path: &str) {
-    unimplemented!()
+fn subcommand_format(fusion_config: &FusionConfig, path: &str) {
+    let file_content = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+    let file = file_content
+        .parse(fusion_config)
+        .unwrap_or_else(|err| fail!("{}", err));
+    println!("{}", format::format(fusion_config, &file.ist));
 }
 
 fn subcommand_format_all(fusion_config: &FusionConfig) {

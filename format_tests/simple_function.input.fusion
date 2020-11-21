@@ -1,0 +1,10 @@
+(define (some_func a b)
+// Some comment
+(lets [(thing1 (value_producer_1 annotated::a)),
+(thing2 (value_producer_2 b)),
+(computed (something thing1 thing2))]
+(if (elts computed "thing" "deep")
+(begin
+(log_info "some message")
+(log_metric "some_metric"))
+computed)))

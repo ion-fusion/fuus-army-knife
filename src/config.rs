@@ -9,12 +9,29 @@ pub struct FusionConfig {
     /// If true, newlines won't be changed at all during the auto-format process
     /// Note: the `false` config value hasn't been implemented yet
     pub preserve_newlines: bool,
+    /// Function/macro names that should have a fixed indent for their body.
+    /// For example, `define`, `begin`, and `let`, may want a fixed indent to avoid crazy indentation levels.
+    pub fixed_indent_symbols: Vec<String>,
+    /// Function/macro names that should use fixed indent if their body is long.
+    /// For example, `if` could be formatted normally if it's short, but formatted like a `define` if long.
+    pub smart_indent_symbols: Vec<String>,
 }
 
 const DEFAULT_CONFIG: &'static str = r#"
 [fusion]
 format_multiline_string_contents = true
 preserve_newlines = true
+fixed_indent_symbols = [
+    "lambda",
+    "define",
+    "begin",
+    "let",
+    "lets",
+    "|",
+]
+smart_indent_symbols = [
+    "if"
+]
 "#;
 
 #[cfg(test)]

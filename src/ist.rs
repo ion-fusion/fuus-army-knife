@@ -2,7 +2,16 @@
 use crate::ast;
 use crate::error::Error;
 use crate::span::ShortSpan;
+use crate::string_util::count_newlines;
 use std::fmt;
+
+pub trait CountNewlines {
+    fn count_newlines(&self) -> usize;
+}
+
+pub trait CountItemsBeforeNewline {
+    fn count_items_before_newline(&self) -> usize;
+}
 
 #[derive(new, Debug)]
 pub struct NonAnnotatedStringData {
@@ -17,17 +26,47 @@ pub struct NonAnnotatedStringListData {
 }
 
 #[derive(new, Debug)]
-pub struct AnnotatedStringListData {
+pub struct MultilineStringData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
-    pub value: Vec<String>,
+    pub value: String,
+}
+
+impl CountNewlines for MultilineStringData {
+    fn count_newlines(&self) -> usize {
+        count_newlines(&self.value)
+    }
 }
 
 #[derive(Debug)]
 pub enum ClobExpr {
-    MultilineString(AnnotatedStringListData),
+    MultilineString(MultilineStringData),
     QuotedString(AtomicData),
     Newlines(NewlinesData),
+}
+
+impl ClobExpr {
+    pub fn is_newlines(&self) -> bool {
+        match *self {
+            ClobExpr::Newlines(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl CountItemsBeforeNewline for &[ClobExpr] {
+    fn count_items_before_newline(&self) -> usize {
+        let mut count = 0;
+        for expr in *self {
+            match expr {
+                ClobExpr::Newlines(_) => return count,
+                _ => {
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
 }
 
 #[derive(new, Debug)]
@@ -36,12 +75,30 @@ pub struct ClobData {
     pub annotations: Vec<String>,
     pub clobs: Vec<ClobExpr>,
 }
+impl CountNewlines for ClobData {
+    fn count_newlines(&self) -> usize {
+        let mut total = 0;
+        for expr in &self.clobs {
+            total += match *expr {
+                ClobExpr::MultilineString(ref data) => data.value.len(),
+                ClobExpr::QuotedString(_) => 0,
+                ClobExpr::Newlines(ref data) => data.newline_count as usize,
+            }
+        }
+        total
+    }
+}
 
 #[derive(new, Debug)]
 pub struct ListData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
     pub items: Vec<IExpr>,
+}
+impl ListData {
+    pub fn count_newlines(&self) -> usize {
+        self.items.iter().map(|expr| expr.count_newlines()).sum()
+    }
 }
 
 #[derive(new, Debug)]
@@ -55,12 +112,46 @@ pub enum StructExpr {
     StructKey(NonAnnotatedStringData),
     StructValue(IExpr),
 }
+impl StructExpr {
+    pub fn is_key(&self) -> bool {
+        match self {
+            StructExpr::StructKey(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_nested_struct(&self) -> bool {
+        match self {
+            StructExpr::StructValue(expr) => expr.is_struct(),
+            _ => false,
+        }
+    }
+
+    pub fn is_value(&self) -> bool {
+        match self {
+            StructExpr::StructValue(expr) => expr.is_value(),
+            _ => false,
+        }
+    }
+}
 
 #[derive(new, Debug)]
 pub struct StructData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
     pub items: Vec<StructExpr>,
+}
+impl CountNewlines for StructData {
+    fn count_newlines(&self) -> usize {
+        let mut total = 0;
+        for expr in &self.items {
+            total += match *expr {
+                StructExpr::StructValue(ref data) => data.count_newlines(),
+                _ => 0,
+            }
+        }
+        total
+    }
 }
 
 #[derive(new)]
@@ -105,10 +196,92 @@ pub enum IExpr {
     CommentBlock(NonAnnotatedStringListData),
     CommentLine(NonAnnotatedStringData),
     List(ListData),
-    MultilineString(AnnotatedStringListData),
+    MultilineString(MultilineStringData),
     Newlines(NewlinesData),
     SExpr(ListData),
     Struct(StructData),
+}
+impl IExpr {
+    pub fn is_newlines(&self) -> bool {
+        match *self {
+            IExpr::Newlines(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_comment(&self) -> bool {
+        match *self {
+            IExpr::CommentBlock(_) => true,
+            IExpr::CommentLine(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_struct(&self) -> bool {
+        match *self {
+            IExpr::Struct(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_value(&self) -> bool {
+        !self.is_newlines() && !self.is_comment()
+    }
+
+    pub fn is_symbol(&self) -> bool {
+        match *self {
+            IExpr::Atomic(ref atomic) => match atomic.typ {
+                AtomicType::Symbol => true,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
+    pub fn symbol_value<'a>(&'a self) -> &'a String {
+        match *self {
+            IExpr::Atomic(ref atomic) => match atomic.typ {
+                AtomicType::Symbol => &atomic.value,
+                _ => panic!(),
+            },
+            _ => panic!(),
+        }
+    }
+}
+impl CountNewlines for &IExpr {
+    fn count_newlines(&self) -> usize {
+        match *self {
+            IExpr::Atomic(_) => 0,
+            IExpr::Clob(ref data) => data.count_newlines(),
+            IExpr::CommentBlock(ref data) => data.value.len(),
+            IExpr::CommentLine(_) => 1,
+            IExpr::List(ref data) => data.count_newlines(),
+            IExpr::MultilineString(ref data) => data.count_newlines(),
+            IExpr::Newlines(ref data) => data.newline_count as usize,
+            IExpr::SExpr(ref data) => data.count_newlines(),
+            IExpr::Struct(ref data) => data.count_newlines(),
+        }
+    }
+}
+
+impl CountNewlines for &[IExpr] {
+    fn count_newlines(&self) -> usize {
+        self.iter().map(|expr| expr.count_newlines()).sum()
+    }
+}
+
+impl CountItemsBeforeNewline for &[IExpr] {
+    fn count_items_before_newline(&self) -> usize {
+        let mut count = 0;
+        for expr in *self {
+            if expr.is_value() {
+                count += 1;
+            } else if expr.is_newlines() {
+                return count;
+            }
+        }
+        count
+    }
 }
 
 #[derive(new)]
@@ -239,8 +412,8 @@ fn visit_ast_clob(expr: &ast::ExpressionsNode, span: ShortSpan) -> Result<IExpr,
     )))
 }
 
-fn visit_ast_multiline_string(expr: &ast::ValuesNode, span: ShortSpan) -> Result<IExpr, Error> {
-    Ok(IExpr::MultilineString(AnnotatedStringListData::new(
+fn visit_ast_multiline_string(expr: &ast::ValueNode, span: ShortSpan) -> Result<IExpr, Error> {
+    Ok(IExpr::MultilineString(MultilineStringData::new(
         span,
         expr.annotations.clone(),
         expr.value.clone(),

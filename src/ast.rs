@@ -40,15 +40,6 @@ pub struct ValuesNode {
     pub annotations: Vec<String>,
     pub value: Vec<String>,
 }
-impl ValuesNode {
-    pub fn new(span: ShortSpan, value: Vec<String>) -> ValuesNode {
-        ValuesNode {
-            span,
-            annotations: Vec::new(),
-            value,
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct ExpressionsNode {
@@ -88,7 +79,7 @@ pub enum Expr {
     CommentLine(NonAnnotatedValue),
     Integer(ValueNode),
     List(ExpressionsNode),
-    MultilineString(ValuesNode),
+    MultilineString(ValueNode),
     Newlines(NewlinesNode),
     Null(ValueNode),
     QuotedString(ValueNode),

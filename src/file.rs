@@ -41,7 +41,7 @@ impl FusionFile {
 fn replace_spans(file_content: &str, debug_view: &str) -> String {
     let span_finder = Regex::new(r"\[Span\((\d+)->(\d+)\)\]").unwrap();
     span_finder
-        .replace_all(&debug_view, |caps: &Captures| {
+        .replace_all(&debug_view, |caps: &Captures<'_>| {
             let start = caps[1].parse::<usize>().unwrap();
             let end = caps[2].parse::<usize>().unwrap();
             let truncate = end - start > 40;

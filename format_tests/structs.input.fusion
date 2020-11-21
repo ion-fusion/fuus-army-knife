@@ -1,0 +1,42 @@
+{}
+
+{x:1,y:2}
+
+{x:1,
+y:2}
+
+{x:
+1,
+y:
+2}
+
+{ x: { y: { z: { } } } }
+
+{x : {
+y:{
+z: {
+}}}}
+
+{x:
+{y:{z:
+{}}}}
+
+{x:
+{y:{z:{}}}}
+
+(define foo {
+   x: 1,
+   y: 2
+})
+
+(define foo
+{foo:1,
+bar:
+{x:1},
+baz:2})
+
+annotated::{}
+'Crazy Annotation'::{}
+
+{ x: /* foo */
+  { y: /* bar */ { z: { } /* baz */ } /* biz */ } }

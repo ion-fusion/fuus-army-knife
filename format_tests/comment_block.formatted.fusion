@@ -1,0 +1,55 @@
+/* foo */
+/* foo */
+
+/*
+ * bar
+ * baz
+ */
+
+/*
+ * bar
+ * asdf
+ *
+ * (some
+ *   (code))
+ *
+ * baz
+ */
+
+/*
+ * bar
+ * asdf
+ *
+ * (some
+ *   (code))
+ *
+ * baz
+ */
+
+/*
+ *
+ * foo
+ *
+ * baz
+ */
+
+(define (foo baz)
+  /*
+   * some comment
+   * foo baz
+   */
+  (some code))
+
+(define (foo baz)
+  /*
+   * some comment
+   * foo baz
+   */
+  (some code))
+
+(define (foo baz)
+  /*
+   * some comment
+   * foo baz
+   */
+  (some code))

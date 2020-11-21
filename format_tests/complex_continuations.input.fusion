@@ -1,0 +1,62 @@
+(|foo baz|
+(+foo baz))
+
+(foo // asdf
+bar)
+
+(foo /* asdf */
+bar)
+
+(foo (bar) // asdf
+bar)
+
+(foo (bar) /* asdf */
+bar)
+
+(define (bar) // asdf
+bar)
+
+(define (bar) /* asdf */
+bar)
+
+(foo 1 2
+3 4
+5 6)
+
+(foo
+1 2
+3 4
+5 6)
+
+(
+foo
+bar
+baz
+)
+
+(foo (a b)
+(b c)
+(d e))
+
+(a (b
+(c
+d)))
+
+[foo,
+[bar,
+baz],
+biz]
+
+("foo" "baz")
+
+("foo"
+"baz")
+
+((foo)
+(baz))
+
+(foobaz
+{ something: 1,
+some_lambda: (|foo|
+(asdf)
+(asdf))})

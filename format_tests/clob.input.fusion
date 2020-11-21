@@ -1,0 +1,32 @@
+{{"foo"}}
+{{
+"foo"
+}}
+
+{{
+"foo"
+"bar"}}
+
+// This has to format ugly or otherwise the clob data will be changed
+{{
+'''
+baz
+  foo
+bar
+'''
+}}
+
+// This has to format ugly or otherwise the clob data will be changed
+(define foo{{'''
+baz
+bar
+'''}})
+
+{{"foo"
+"bar"}}
+
+{{"1" "2"
+"3" "4"}}
+
+(define foo {{"foo"
+"bar"}})
