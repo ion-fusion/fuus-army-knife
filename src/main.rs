@@ -23,6 +23,8 @@ mod validate;
 use crate::config::{load_config, FusionConfig};
 use crate::file::{FusionFile, FusionFileContent};
 use clap::{crate_version, App, Arg, SubCommand};
+use std::io::Write;
+use tempfile::NamedTempFile;
 use walkdir::WalkDir;
 
 macro_rules! fail {
@@ -108,12 +110,34 @@ fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
     println!("{}", file.debug_ist());
 }
 
+fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) {
+    let formatted = format::format(fusion_config, &fusion_file.ist);
+
+    // Write formatted to a temp file
+    let mut temp_file: NamedTempFile =
+        NamedTempFile::new().unwrap_or_else(|err| fail!("Failed to create temp file: {}", err));
+    write!(temp_file, "{}", formatted)
+        .unwrap_or_else(|err| fail!("Failed to write to temp file: {}", err));
+
+    // Replace original file with temp file via rename
+    temp_file
+        .into_temp_path()
+        .persist(&fusion_file.file_name)
+        .unwrap_or_else(|err| {
+            fail!(
+                "Failed to overwrite {:?} with formatted output: {}",
+                fusion_file.file_name,
+                err
+            )
+        });
+}
+
 fn subcommand_format(fusion_config: &FusionConfig, path: &str) {
     let file_content = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
     let file = file_content
         .parse(fusion_config)
         .unwrap_or_else(|err| fail!("{}", err));
-    println!("{}", format::format(fusion_config, &file.ist));
+    format_file_in_place(fusion_config, &file);
 }
 
 fn subcommand_format_all(fusion_config: &FusionConfig) {
@@ -138,16 +162,7 @@ fn subcommand_format_all(fusion_config: &FusionConfig) {
     }
 
     for file in &fusion_files {
-        println!("Validating {:?}...", file.file_name);
-        let errors = validate::validate(&file);
-        if !errors.is_empty() {
-            for error in &errors {
-                eprintln!("  {}\n", error);
-            }
-            println!("  Skipping {:?}...", file.file_name);
-        }
-
         println!("Formatting {:?}...", file.file_name);
-        // TODO
+        format_file_in_place(fusion_config, file);
     }
 }
