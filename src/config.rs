@@ -2,13 +2,16 @@
 use crate::error::Error;
 use toml::Value;
 
+const NEWLINE_MODE_NO_CHANGE: &'static str = "no-change";
+const NEWLINE_MODE_FIX_UP: &'static str = "fix-up";
+
 #[derive(Deserialize)]
 pub struct FusionConfig {
+    /// Newline mode 'no-change' will make zero changes to newlines in the file.
+    /// Mode 'fix-up' will shuffle around newlines for improved formatting.
+    pub newline_mode: String,
     /// If true, multi-line Fusion strings (''') will have their whitespace modified
     pub format_multiline_string_contents: bool,
-    /// If true, newlines won't be changed at all during the auto-format process
-    /// Note: the `false` config value hasn't been implemented yet
-    pub preserve_newlines: bool,
     /// Function/macro names that should have a fixed indent for their body.
     /// For example, `define`, `begin`, and `let`, may want a fixed indent to avoid crazy indentation levels.
     pub fixed_indent_symbols: Vec<String>,
@@ -17,10 +20,19 @@ pub struct FusionConfig {
     pub smart_indent_symbols: Vec<String>,
 }
 
+impl FusionConfig {
+    fn newline_fix_up_mode(&self) -> bool {
+        self.newline_mode == NEWLINE_MODE_FIX_UP
+    }
+    fn newline_no_change_mode(&self) -> bool {
+        self.newline_mode == NEWLINE_MODE_NO_CHANGE
+    }
+}
+
 const DEFAULT_CONFIG: &'static str = r#"
 [fusion]
+newline_mode = "fix-up"
 format_multiline_string_contents = true
-preserve_newlines = true
 fixed_indent_symbols = [
     "lambda",
     "define",
@@ -56,7 +68,7 @@ pub fn load_config(config_file_name: &str) -> Result<FusionConfig, Error> {
         ))
     })?;
 
-    config
+    let config = config
         .get("fusion")
         .ok_or_else(|| {
             Error::Generic(format!(
@@ -71,5 +83,12 @@ pub fn load_config(config_file_name: &str) -> Result<FusionConfig, Error> {
                 "Failed to parse 'fusion' top-level config in {}: {}",
                 config_file_name, err
             ))
-        })
+        })?;
+    if config.newline_mode != NEWLINE_MODE_NO_CHANGE && config.newline_mode != NEWLINE_MODE_FIX_UP {
+        return Err(Error::Generic(format!(
+            "Unknown newline mode in config: {}. Should be '{}' or '{}'",
+            config.newline_mode, NEWLINE_MODE_NO_CHANGE, NEWLINE_MODE_FIX_UP
+        )));
+    }
+    Ok(config)
 }

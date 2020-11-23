@@ -187,16 +187,14 @@ fn visit_structure<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     result!(Struct, ExpressionsNode::new(span.into(), sub_exprs))
 }
 
-fn visit_whitespace<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
-    if config.preserve_newlines {
-        let span = pair.as_span();
-        let newline_count = count_newlines(span.as_str());
-        if newline_count > 0 {
-            return result!(
-                Newlines,
-                NewlinesNode::new(span.into(), newline_count as u16)
-            );
-        }
+fn visit_whitespace<'i>(pair: FPair<'i>) -> ParseResult {
+    let span = pair.as_span();
+    let newline_count = count_newlines(span.as_str());
+    if newline_count > 0 {
+        return result!(
+            Newlines,
+            NewlinesNode::new(span.into(), newline_count as u16)
+        );
     }
     Ok(Vec::new())
 }
@@ -219,7 +217,7 @@ fn visit_pair<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
         Rule::struct_member => visit_structure_member(pair, config),
         Rule::symbol => simple_value_node!(Symbol, pair),
         Rule::timestamp => simple_value_node!(Timestamp, pair),
-        Rule::WHITESPACE => visit_whitespace(pair, config),
+        Rule::WHITESPACE => visit_whitespace(pair),
         Rule::EOI => Ok(Vec::new()),
 
         // Unreachable rules separated out so that if we add a new rule, we don't forget to edit this function

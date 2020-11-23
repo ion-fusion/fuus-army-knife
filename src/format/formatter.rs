@@ -6,26 +6,23 @@ use crate::string_util::{
     last_is_one_of, repeat, trim_indent,
 };
 
-/// Formats the given IST into a String using the provided FusionConfig
-pub fn format(fusion_config: &FusionConfig, ist: &IntermediateSyntaxTree) -> String {
-    let mut formatter = Formatter::new(fusion_config);
-    formatter.visit_exprs(&ist.expressions, 0);
-    formatter.finish()
-}
-
-struct Formatter<'i> {
+pub struct Formatter<'i> {
     config: &'i FusionConfig,
     output: String,
 }
 impl<'i> Formatter<'i> {
-    fn new(config: &'i FusionConfig) -> Formatter<'i> {
+    pub fn new(config: &'i FusionConfig) -> Formatter<'i> {
         Formatter {
             config,
             output: String::new(),
         }
     }
 
-    fn finish(self) -> String {
+    pub fn format(&mut self, exprs: &Vec<IExpr>) {
+        self.visit_exprs(exprs, 0);
+    }
+
+    pub fn finish(self) -> String {
         self.output
             .lines()
             .map(|line| line.trim_end())
@@ -347,106 +344,5 @@ fn calculate_continuation_indent(
         IndentType::Fixed => next_indent + 2,
         IndentType::EndOfOpeningSymbol(indent) => indent,
         IndentType::Undetermined => unreachable!(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::new_default_config;
-    use crate::file::FusionFileContent;
-    use crate::test_util::human_diff_lines;
-
-    macro_rules! test {
-        ($input:expr, $output:expr) => {
-            let input = include_str!($input);
-            let expected_output = include_str!($output).trim();
-            let config = new_default_config();
-            let file = FusionFileContent::new("test".into(), input.into())
-                .parse(&config)
-                .unwrap_or_else(|error| panic!("Error: {}", error));
-            let actual_output = format(&config, &file.ist).trim().to_string();
-            if expected_output != &actual_output {
-                let msg = format!(
-                    "\nProcessing of {} didn't match expected output in {}:\n{}\n",
-                    $input,
-                    $output,
-                    human_diff_lines(expected_output, actual_output)
-                );
-                assert!(false, msg);
-            }
-        };
-    }
-
-    #[test]
-    fn clob() {
-        test!(
-            "../format_tests/clob.input.fusion",
-            "../format_tests/clob.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn comment_block() {
-        test!(
-            "../format_tests/comment_block.input.fusion",
-            "../format_tests/comment_block.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn multiline_string() {
-        test!(
-            "../format_tests/multiline_string.input.fusion",
-            "../format_tests/multiline_string.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn simple_continuations() {
-        test!(
-            "../format_tests/simple_continuations.input.fusion",
-            "../format_tests/simple_continuations.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn complex_continuations() {
-        test!(
-            "../format_tests/complex_continuations.input.fusion",
-            "../format_tests/complex_continuations.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn simple_function() {
-        test!(
-            "../format_tests/simple_function.input.fusion",
-            "../format_tests/simple_function.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn structs() {
-        test!(
-            "../format_tests/structs.input.fusion",
-            "../format_tests/structs.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn lists() {
-        test!(
-            "../format_tests/lists.input.fusion",
-            "../format_tests/lists.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn real_world_1() {
-        test!(
-            "../format_tests/real_world_1.input.fusion",
-            "../format_tests/real_world_1.formatted.fusion"
-        );
     }
 }
