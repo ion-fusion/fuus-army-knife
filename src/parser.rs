@@ -449,6 +449,14 @@ mod parser_tests {
     }
 
     #[test]
+    fn test_symbol() {
+        test!(
+            "../ast_tests/symbol.input.fusion",
+            "../ast_tests/symbol.ast.txt"
+        );
+    }
+
+    #[test]
     fn test_structure() {
         test!(
             "../ast_tests/structure.input.fusion",

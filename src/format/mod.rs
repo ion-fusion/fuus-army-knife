@@ -119,6 +119,14 @@ mod tests {
     }
 
     #[test]
+    fn misc() {
+        test!(
+            "../../format_tests/misc.input.fusion",
+            "../../format_tests/misc.formatted.fusion"
+        );
+    }
+
+    #[test]
     fn real_world_1() {
         test!(
             "../../format_tests/real_world_1.input.fusion",

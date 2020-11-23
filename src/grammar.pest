@@ -18,7 +18,7 @@ null = @{
         "blob" | "clob" | "bool" | "int" | "list" |
         "decimal" | "float" | "symbol" | "string" |
         "timestamp" | "sexp" | "struct"
-    )) | (!"null." ~ "null")
+    )) | ("null" ~ !("." | "_" | "$"))
 }
 
 blob = ${ "{{" ~ BLOB_INNER ~ "}}" }
