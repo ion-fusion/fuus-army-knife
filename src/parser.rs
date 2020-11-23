@@ -252,6 +252,7 @@ fn visit_pair<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
         | Rule::struct_member_list
         | Rule::SYMBOL_FIRST_CHAR
         | Rule::SYMBOL_IDENT
+        | Rule::SYMBOL_OPERATOR
         | Rule::SYMBOL_OPERATOR_CHARS
         | Rule::SYMBOL_QUOTE
         | Rule::SYMBOL_QUOTE_CHAR
@@ -447,6 +448,14 @@ mod parser_tests {
         test!(
             "../ast_tests/timestamp.input.fusion",
             "../ast_tests/timestamp.ast.txt"
+        );
+    }
+
+    #[test]
+    fn test_operators() {
+        test!(
+            "../ast_tests/operators.input.fusion",
+            "../ast_tests/operators.ast.txt"
         );
     }
 

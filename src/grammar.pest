@@ -45,13 +45,14 @@ real = @{
     (DECIMAL_INT ~ "." ~ !("_" | UNDERSCORE_SEP_DIGITS))
 }
 
-symbol = @{ SYMBOL_IDENT | SYMBOL_QUOTE }
+symbol = @{ SYMBOL_OPERATOR | SYMBOL_IDENT | SYMBOL_QUOTE }
+    SYMBOL_OPERATOR = @{ SYMBOL_OPERATOR_CHARS+ }
     SYMBOL_OPERATOR_CHARS = @{
         "!" | "#" | "%" | "&" | "*" | "+" | "-" | "." | "/" | ";" |
         "<" | "=" | ">" | "?" | "@" | "^" | "`" | "|" | "~"
     }
-    SYMBOL_FIRST_CHAR = @{ ASCII_ALPHA | "_" | SYMBOL_OPERATOR_CHARS }
-    SYMBOL_TAIL_CHARS = @{ ASCII_ALPHANUMERIC | "_" | SYMBOL_OPERATOR_CHARS }
+    SYMBOL_FIRST_CHAR = @{ ASCII_ALPHA | "_" | "$" }
+    SYMBOL_TAIL_CHARS = @{ ASCII_ALPHANUMERIC | "_" | "$" }
     SYMBOL_IDENT = @{ SYMBOL_FIRST_CHAR ~ SYMBOL_TAIL_CHARS* }
     SYMBOL_QUOTE = @{ "'" ~ SYMBOL_QUOTE_INNER ~ "'" }
     SYMBOL_QUOTE_INNER = @{ SYMBOL_QUOTE_CHAR* }
