@@ -46,6 +46,7 @@ impl<'i> Formatter<'i> {
             IExpr::Newlines(data) => self.visit_newlines(data, next_indent),
             IExpr::SExpr(data) => self.visit_sexpr(data),
             IExpr::Struct(data) => self.visit_struct(data),
+            IExpr::StructKey(data) => self.visit_struct_key(data),
         }
     }
 
@@ -219,6 +220,14 @@ impl<'i> Formatter<'i> {
         self.output.push(']');
     }
 
+    fn visit_struct_key(&mut self, data: &NonAnnotatedStringData) {
+        if !last_is_one_of(&self.output, &['\n']) {
+            self.output.push(' ');
+        }
+        self.output.push_str(&data.value);
+        self.output.push(':');
+    }
+
     fn visit_struct(&mut self, data: &StructData) {
         self.visit_annotations(&data.annotations);
 
@@ -229,46 +238,36 @@ impl<'i> Formatter<'i> {
 
         self.output.push('{');
         for i in 0..data.items.len() {
-            let item = &data.items[i];
-            match item {
-                StructExpr::StructKey(key) => {
-                    if !last_is_one_of(&self.output, &['\n']) {
-                        self.output.push(' ');
-                    }
-                    self.output.push_str(&key.value);
-                    self.output.push(':');
-                }
-                StructExpr::StructValue(value) => {
-                    if value.is_newlines() {
-                        if let Some(next) = data.items[(i + 1)..]
-                            .iter()
-                            .find(|item| item.is_value() || item.is_key())
-                        {
-                            if next.is_key() {
-                                self.visit_expr(value, key_continuation);
-                            } else if next.is_nested_struct() {
-                                self.visit_expr(value, struct_continuation);
-                            } else {
-                                self.visit_expr(value, value_continuation);
-                            }
-                        } else {
-                            self.visit_expr(value, empty_continuation - 1);
-                        }
+            let value = &data.items[i];
+            if value.is_newlines() {
+                if let Some(next) = data.items[(i + 1)..]
+                    .iter()
+                    .find(|item| item.is_value() || item.is_struct_key())
+                {
+                    if next.is_struct_key() {
+                        self.visit_expr(value, key_continuation);
+                    } else if next.is_struct() {
+                        self.visit_expr(value, struct_continuation);
                     } else {
-                        if last_is_one_of(&self.output, &[':', '/']) || value.is_comment() {
-                            self.output.push(' ');
-                        }
-                        self.visit_expr(value, 0);
-                        if value.is_value()
-                            && data.items[(i + 1)..].iter().any(|item| item.is_value())
-                        {
-                            self.output.push(',');
-                        }
+                        self.visit_expr(value, value_continuation);
                     }
+                } else {
+                    self.visit_expr(value, empty_continuation);
+                }
+            } else {
+                if last_is_one_of(&self.output, &[':', '/']) || value.is_comment() {
+                    self.output.push(' ');
+                }
+                self.visit_expr(value, 0);
+                if value.is_value() && data.items[(i + 1)..].iter().any(|item| item.is_value()) {
+                    self.output.push(',');
                 }
             }
         }
-        self.output.push_str(" }");
+        if !already_has_whitespace_before_cursor(&self.output) {
+            self.output.push(' ');
+        }
+        self.output.push_str("}");
     }
 }
 

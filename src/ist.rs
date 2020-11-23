@@ -108,49 +108,14 @@ pub struct StructMemberData {
 }
 
 #[derive(new, Debug)]
-pub enum StructExpr {
-    StructKey(NonAnnotatedStringData),
-    StructValue(IExpr),
-}
-impl StructExpr {
-    pub fn is_key(&self) -> bool {
-        match self {
-            StructExpr::StructKey(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_nested_struct(&self) -> bool {
-        match self {
-            StructExpr::StructValue(expr) => expr.is_struct(),
-            _ => false,
-        }
-    }
-
-    pub fn is_value(&self) -> bool {
-        match self {
-            StructExpr::StructValue(expr) => expr.is_value(),
-            _ => false,
-        }
-    }
-}
-
-#[derive(new, Debug)]
 pub struct StructData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
-    pub items: Vec<StructExpr>,
+    pub items: Vec<IExpr>,
 }
 impl CountNewlines for StructData {
     fn count_newlines(&self) -> usize {
-        let mut total = 0;
-        for expr in &self.items {
-            total += match *expr {
-                StructExpr::StructValue(ref data) => data.count_newlines(),
-                _ => 0,
-            }
-        }
-        total
+        (&self.items[..]).count_newlines()
     }
 }
 
@@ -200,6 +165,7 @@ pub enum IExpr {
     Newlines(NewlinesData),
     SExpr(ListData),
     Struct(StructData),
+    StructKey(NonAnnotatedStringData),
 }
 impl IExpr {
     pub fn is_newlines(&self) -> bool {
@@ -224,8 +190,15 @@ impl IExpr {
         }
     }
 
+    pub fn is_struct_key(&self) -> bool {
+        match self {
+            IExpr::StructKey(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_value(&self) -> bool {
-        !self.is_newlines() && !self.is_comment()
+        !self.is_newlines() && !self.is_comment() && !self.is_struct_key()
     }
 
     pub fn is_symbol(&self) -> bool {
@@ -260,6 +233,7 @@ impl CountNewlines for &IExpr {
             IExpr::Newlines(ref data) => data.newline_count as usize,
             IExpr::SExpr(ref data) => data.count_newlines(),
             IExpr::Struct(ref data) => data.count_newlines(),
+            IExpr::StructKey(ref data) => 0,
         }
     }
 }
@@ -342,28 +316,28 @@ fn visit_ast_expr(expr: &ast::Expr) -> Result<IExpr, Error> {
     }
 }
 
-fn visit_ast_struct_member(exprs: &Vec<ast::Expr>) -> Result<Vec<StructExpr>, Error> {
-    let mut ist: Vec<StructExpr> = Vec::new();
+fn visit_ast_struct_member(exprs: &Vec<ast::Expr>) -> Result<Vec<IExpr>, Error> {
+    let mut ist: Vec<IExpr> = Vec::new();
     for ast_mem in exprs {
         ist.push(match ast_mem {
             ast::Expr::StructKey(ref key) => {
-                StructExpr::StructKey(NonAnnotatedStringData::new(key.span, key.value.clone()))
+                IExpr::StructKey(NonAnnotatedStringData::new(key.span, key.value.clone()))
             }
-            _ => StructExpr::StructValue(visit_ast_expr(ast_mem)?),
+            _ => visit_ast_expr(ast_mem)?,
         })
     }
     Ok(ist)
 }
 
 fn visit_ast_struct(expr: &ast::ExpressionsNode, span: ShortSpan) -> Result<IExpr, Error> {
-    let mut ist: Vec<StructExpr> = Vec::new();
+    let mut ist: Vec<IExpr> = Vec::new();
     for ast_mem in &expr.value {
         match *ast_mem {
             ast::Expr::StructMember(ref mem) => {
                 ist.extend(visit_ast_struct_member(&mem.value)?.into_iter())
             }
             ast::Expr::CommentBlock(_) | ast::Expr::CommentLine(_) | ast::Expr::Newlines(_) => {
-                ist.push(StructExpr::StructValue(visit_ast_expr(ast_mem)?))
+                ist.push(visit_ast_expr(ast_mem)?)
             }
             _ => unreachable!(),
         }
