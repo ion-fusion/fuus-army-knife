@@ -228,7 +228,7 @@ impl<'i> Formatter<'i> {
         self.output.push(':');
     }
 
-    fn visit_struct(&mut self, data: &StructData) {
+    fn visit_struct(&mut self, data: &ListData) {
         self.visit_annotations(&data.annotations);
 
         let empty_continuation = find_cursor_pos(&self.output);

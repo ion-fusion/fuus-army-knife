@@ -1,5 +1,6 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 
+mod fixup;
 mod formatter;
 
 use crate::config::FusionConfig;
@@ -9,7 +10,11 @@ use crate::ist::IntermediateSyntaxTree;
 /// Formats the given IST into a String using the provided FusionConfig
 pub fn format(fusion_config: &FusionConfig, ist: &IntermediateSyntaxTree) -> String {
     let mut formatter = Formatter::new(fusion_config);
-    formatter.format(&ist.expressions);
+    if fusion_config.newline_fix_up_mode() {
+        formatter.format(&fixup::fixup_ist(ist).expressions);
+    } else {
+        formatter.format(&ist.expressions);
+    }
     formatter.finish()
 }
 
@@ -106,10 +111,26 @@ mod tests {
     }
 
     #[test]
+    fn fix_up() {
+        test!(
+            "../../format_tests/fix_up.input.fusion",
+            "../../format_tests/fix_up.formatted.fusion"
+        );
+    }
+
+    #[test]
     fn real_world_1() {
         test!(
             "../../format_tests/real_world_1.input.fusion",
             "../../format_tests/real_world_1.formatted.fusion"
+        );
+    }
+
+    #[test]
+    fn real_world_2() {
+        test!(
+            "../../format_tests/real_world_2.input.fusion",
+            "../../format_tests/real_world_2.formatted.fusion"
         );
     }
 }

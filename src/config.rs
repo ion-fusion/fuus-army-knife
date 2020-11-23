@@ -21,10 +21,10 @@ pub struct FusionConfig {
 }
 
 impl FusionConfig {
-    fn newline_fix_up_mode(&self) -> bool {
+    pub fn newline_fix_up_mode(&self) -> bool {
         self.newline_mode == NEWLINE_MODE_FIX_UP
     }
-    fn newline_no_change_mode(&self) -> bool {
+    pub fn newline_no_change_mode(&self) -> bool {
         self.newline_mode == NEWLINE_MODE_NO_CHANGE
     }
 }
@@ -34,11 +34,12 @@ const DEFAULT_CONFIG: &'static str = r#"
 newline_mode = "fix-up"
 format_multiline_string_contents = true
 fixed_indent_symbols = [
-    "lambda",
-    "define",
     "begin",
+    "define",
+    "lambda",
     "let",
     "lets",
+    "when",
     "|",
 ]
 smart_indent_symbols = [

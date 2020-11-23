@@ -13,19 +13,27 @@ pub trait CountItemsBeforeNewline {
     fn count_items_before_newline(&self) -> usize;
 }
 
-#[derive(new, Debug)]
+pub trait CountUntilPred<P, U>
+where
+    P: Fn(&IExpr) -> bool,
+    U: Fn(&IExpr) -> bool,
+{
+    fn count_until(&self, pred: P, until: U) -> usize;
+}
+
+#[derive(new, Clone, Debug)]
 pub struct NonAnnotatedStringData {
     pub span: ShortSpan,
     pub value: String,
 }
 
-#[derive(new, Debug)]
+#[derive(new, Clone, Debug)]
 pub struct NonAnnotatedStringListData {
     pub span: ShortSpan,
     pub value: Vec<String>,
 }
 
-#[derive(new, Debug)]
+#[derive(new, Clone, Debug)]
 pub struct MultilineStringData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
@@ -38,7 +46,7 @@ impl CountNewlines for MultilineStringData {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ClobExpr {
     MultilineString(MultilineStringData),
     QuotedString(AtomicData),
@@ -69,7 +77,7 @@ impl CountItemsBeforeNewline for &[ClobExpr] {
     }
 }
 
-#[derive(new, Debug)]
+#[derive(new, Clone, Debug)]
 pub struct ClobData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
@@ -89,7 +97,7 @@ impl CountNewlines for ClobData {
     }
 }
 
-#[derive(new, Debug)]
+#[derive(new, Clone, Debug)]
 pub struct ListData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
@@ -101,25 +109,7 @@ impl ListData {
     }
 }
 
-#[derive(new, Debug)]
-pub struct StructMemberData {
-    pub span: ShortSpan,
-    pub items: Vec<IExpr>,
-}
-
-#[derive(new, Debug)]
-pub struct StructData {
-    pub span: ShortSpan,
-    pub annotations: Vec<String>,
-    pub items: Vec<IExpr>,
-}
-impl CountNewlines for StructData {
-    fn count_newlines(&self) -> usize {
-        (&self.items[..]).count_newlines()
-    }
-}
-
-#[derive(new)]
+#[derive(new, Clone, Copy)]
 pub struct NewlinesData {
     pub span: ShortSpan,
     pub newline_count: u16,
@@ -146,7 +136,7 @@ pub enum AtomicType {
     Timestamp,
 }
 
-#[derive(new, Debug)]
+#[derive(new, Clone, Debug)]
 pub struct AtomicData {
     pub typ: AtomicType,
     pub span: ShortSpan,
@@ -154,7 +144,7 @@ pub struct AtomicData {
     pub value: String,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum IExpr {
     Atomic(AtomicData),
     Clob(ClobData),
@@ -164,7 +154,7 @@ pub enum IExpr {
     MultilineString(MultilineStringData),
     Newlines(NewlinesData),
     SExpr(ListData),
-    Struct(StructData),
+    Struct(ListData),
     StructKey(NonAnnotatedStringData),
 }
 impl IExpr {
@@ -183,6 +173,13 @@ impl IExpr {
         }
     }
 
+    pub fn is_comment_line(&self) -> bool {
+        match *self {
+            IExpr::CommentLine(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_struct(&self) -> bool {
         match *self {
             IExpr::Struct(_) => true,
@@ -195,6 +192,10 @@ impl IExpr {
             IExpr::StructKey(_) => true,
             _ => false,
         }
+    }
+
+    pub fn is_not_comment_or_newlines(&self) -> bool {
+        !self.is_newlines() && !self.is_comment()
     }
 
     pub fn is_value(&self) -> bool {
@@ -233,7 +234,7 @@ impl CountNewlines for &IExpr {
             IExpr::Newlines(ref data) => data.newline_count as usize,
             IExpr::SExpr(ref data) => data.count_newlines(),
             IExpr::Struct(ref data) => data.count_newlines(),
-            IExpr::StructKey(ref data) => 0,
+            IExpr::StructKey(_) => 0,
         }
     }
 }
@@ -243,18 +244,27 @@ impl CountNewlines for &[IExpr] {
         self.iter().map(|expr| expr.count_newlines()).sum()
     }
 }
-
-impl CountItemsBeforeNewline for &[IExpr] {
-    fn count_items_before_newline(&self) -> usize {
+impl<P, U> CountUntilPred<P, U> for &[IExpr]
+where
+    P: Fn(&IExpr) -> bool,
+    U: Fn(&IExpr) -> bool,
+{
+    fn count_until(&self, pred: P, until: U) -> usize {
         let mut count = 0;
         for expr in *self {
-            if expr.is_value() {
+            if pred(expr) {
                 count += 1;
-            } else if expr.is_newlines() {
+            } else if until(expr) {
                 return count;
             }
         }
         count
+    }
+}
+
+impl CountItemsBeforeNewline for &[IExpr] {
+    fn count_items_before_newline(&self) -> usize {
+        self.count_until(|e| e.is_not_comment_or_newlines(), |e| e.is_newlines())
     }
 }
 
@@ -342,7 +352,7 @@ fn visit_ast_struct(expr: &ast::ExpressionsNode, span: ShortSpan) -> Result<IExp
             _ => unreachable!(),
         }
     }
-    Ok(IExpr::Struct(StructData::new(
+    Ok(IExpr::Struct(ListData::new(
         span,
         expr.annotations.clone(),
         ist,

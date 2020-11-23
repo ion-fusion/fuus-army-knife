@@ -28,11 +28,9 @@
   3 4
   5 6)
 
-(
- foo
- bar
- baz
- )
+(foo
+  bar
+  baz)
 
 (foo (a b)
      (b c)

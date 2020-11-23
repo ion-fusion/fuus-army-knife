@@ -1,0 +1,67 @@
+(define foo {
+   x: 1,
+   y: 2,
+   z: {
+      foo: "asdf",
+      bar: "fdsa",
+   }})
+
+{ // foo
+}
+
+(define foo [
+   1,
+   2])
+
+(define foo [
+   1,
+   [
+      3,
+      4
+   ],
+   2])
+
+(define foo {
+   x: 1,
+   y: 2,
+   z: [
+     "asdf",
+     "fdsa",
+   ]})
+
+{
+}
+
+{ foo: {
+} }
+
+[
+]
+
+[[
+]]
+
+(foo (foo {
+   bar: 5,
+   baz: 6 }))
+
+(?~>
+  //
+  {
+     //
+     foo: 5,
+     baz: {
+        a: 1,
+        b: 2
+     }
+  }
+  (foo))
+
+{
+  output_assets: [
+     { type: "YJ" }],
+  passback_fields: {
+    vendor_file_id: vendor_file_id,
+    asin: asin,
+    aiw_id: aiwId,
+    vendor_code: vendor_code}}
