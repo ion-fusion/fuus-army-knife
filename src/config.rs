@@ -24,24 +24,34 @@ impl FusionConfig {
     pub fn newline_fix_up_mode(&self) -> bool {
         self.newline_mode == NEWLINE_MODE_FIX_UP
     }
-    pub fn newline_no_change_mode(&self) -> bool {
-        self.newline_mode == NEWLINE_MODE_NO_CHANGE
-    }
 }
 
 const DEFAULT_CONFIG: &'static str = r#"
 [fusion]
+
+# Newline mode 'no-change' will make zero changes to newlines in the file.
+# Mode 'fix-up' will shuffle around newlines for improved formatting.
 newline_mode = "fix-up"
+
+# If true, multi-line Fusion strings (''') will have their whitespace modified
 format_multiline_string_contents = true
+
+# Function/macro names that should have a fixed indent for their body.
+# For example, `define`, `begin`, and `let`, may want a fixed indent to avoid crazy indentation levels.
 fixed_indent_symbols = [
+    # Fusion defaults
     "begin",
     "define",
+    "define_syntax",
     "lambda",
     "let",
     "lets",
     "when",
     "|",
 ]
+
+# Function/macro names that should use fixed indent if their body is long.
+# For example, `if` could be formatted normally if it's short, but formatted like a `define` if long.
 smart_indent_symbols = [
     "if"
 ]
@@ -92,4 +102,13 @@ pub fn load_config(config_file_name: &str) -> Result<FusionConfig, Error> {
         )));
     }
     Ok(config)
+}
+
+pub fn write_default_config() -> Result<(), Error> {
+    use std::fs::File;
+    use std::io::Write;
+
+    let mut file = File::create("fuusak.toml").map_err(|err| Error::Generic(format!("{}", err)))?;
+    write!(file, "{}", DEFAULT_CONFIG).map_err(|err| Error::Generic(format!("{}", err)))?;
+    Ok(())
 }

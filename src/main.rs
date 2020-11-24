@@ -20,7 +20,7 @@ mod string_util;
 mod test_util;
 mod validate;
 
-use crate::config::{load_config, FusionConfig};
+use crate::config::{load_config, write_default_config, FusionConfig};
 use crate::file::{FusionFile, FusionFileContent};
 use clap::{crate_version, App, Arg, SubCommand};
 use std::io::Write;
@@ -49,6 +49,8 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("debug-ist") {
         let path = matches.value_of("FILE").unwrap();
         subcommand_debug_ist(&fusion_config, path);
+    } else if let Some(_) = matches.subcommand_matches("create-config") {
+        subcommand_create_config();
     } else if let Some(matches) = matches.subcommand_matches("format") {
         let path = matches.value_of("FILE").unwrap();
         subcommand_format(&fusion_config, path);
@@ -83,6 +85,10 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
                 .arg(Arg::with_name("FILE").required(true).index(1)),
         )
         .subcommand(
+            SubCommand::with_name("create-config")
+                .about("creates a config file for Fuus Army Knife in the current directory"),
+        )
+        .subcommand(
             SubCommand::with_name("format")
                 .about("formats a single file")
                 .arg(Arg::with_name("FILE").required(true).index(1)),
@@ -108,6 +114,10 @@ fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
         .parse(fusion_config)
         .unwrap_or_else(|err| fail!("{}", err));
     println!("{}", file.debug_ist());
+}
+
+fn subcommand_create_config() {
+    write_default_config().unwrap_or_else(|err| fail!("Failed to write default config: {}", err));
 }
 
 fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) {

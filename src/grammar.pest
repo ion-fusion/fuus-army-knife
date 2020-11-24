@@ -17,7 +17,7 @@ null = @{
     ("null." ~ (
         "blob" | "clob" | "bool" | "int" | "list" |
         "decimal" | "float" | "symbol" | "string" |
-        "timestamp" | "sexp" | "struct"
+        "timestamp" | "sexp" | "struct" | "null"
     )) | ("null" ~ !("." | SYMBOL_TAIL_CHARS))
 }
 
