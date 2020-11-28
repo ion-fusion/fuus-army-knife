@@ -7,6 +7,7 @@ extern crate derive_new;
 extern crate serde_derive;
 
 mod ast;
+mod check;
 mod config;
 mod error;
 mod file;
@@ -18,12 +19,12 @@ mod span;
 mod string_util;
 #[cfg(test)]
 mod test_util;
-mod validate;
 
 use crate::config::{load_config, write_default_config, FusionConfig};
 use crate::file::{FusionFile, FusionFileContent};
 use clap::{crate_version, App, Arg, SubCommand};
 use std::io::Write;
+use std::process;
 use tempfile::NamedTempFile;
 use walkdir::WalkDir;
 
@@ -49,6 +50,9 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("debug-ist") {
         let path = matches.value_of("FILE").unwrap();
         subcommand_debug_ist(&fusion_config, path);
+    } else if let Some(matches) = matches.subcommand_matches("check") {
+        let path = matches.value_of("FILE").unwrap();
+        subcommand_check(&fusion_config, path);
     } else if let Some(_) = matches.subcommand_matches("create-config") {
         subcommand_create_config();
     } else if let Some(matches) = matches.subcommand_matches("format") {
@@ -85,6 +89,11 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
                 .arg(Arg::with_name("FILE").required(true).index(1)),
         )
         .subcommand(
+            SubCommand::with_name("check")
+                .about("checks a Fusion file for errors")
+                .arg(Arg::with_name("FILE").required(true).index(1)),
+        )
+        .subcommand(
             SubCommand::with_name("create-config")
                 .about("creates a config file for Fuus Army Knife in the current directory"),
         )
@@ -114,6 +123,20 @@ fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
         .parse(fusion_config)
         .unwrap_or_else(|err| fail!("{}", err));
     println!("{}", file.debug_ist());
+}
+
+fn subcommand_check(fusion_config: &FusionConfig, path: &str) {
+    let file_contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+    let file = file_contents
+        .parse(fusion_config)
+        .unwrap_or_else(|err| fail!("{}", err));
+    let errors = check::check(fusion_config, &file);
+    if !errors.is_empty() {
+        for error in &errors {
+            println!("{}", error);
+        }
+        process::exit(1);
+    }
 }
 
 fn subcommand_create_config() {

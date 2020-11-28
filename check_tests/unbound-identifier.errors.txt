@@ -1,0 +1,126 @@
+[
+ --> "../check_tests/unbound-identifier.fusion":2:1
+  |
+2 | foo // ERROR
+  | ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "../check_tests/unbound-identifier.fusion":3:2
+  |
+3 | (foo) // ERROR
+  |  ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "../check_tests/unbound-identifier.fusion":4:2
+  |
+4 | [foo] // ERROR
+  |  ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "../check_tests/unbound-identifier.fusion":5:6
+  |
+5 | { x: foo } // ERROR
+  |      ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "../check_tests/unbound-identifier.fusion":9:16
+  |
+9 | (let [(foo 5)] bar) // ERROR
+  |                ^-^
+  |
+  = Unbound identifier bar
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":11:17
+   |
+11 | (lets [(foo 5)] bar) // ERROR
+   |                 ^-^
+   |
+   = Unbound identifier bar
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":15:15
+   |
+15 |       (bar (+ foo 1))] // ERROR
+   |               ^-^
+   |
+   = Unbound identifier foo
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":23:20
+   |
+23 | (lambda (x y) (+ x z)) // ERROR
+   |                    ^
+   |
+   = Unbound identifier z
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":25:13
+   |
+25 | (|x y| (+ x z)) // ERROR
+   |             ^
+   |
+   = Unbound identifier z
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":27:14
+   |
+27 | (lambda args definitely_unbound) // ERROR
+   |              ^----------------^
+   |
+   = Unbound identifier definitely_unbound
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":43:4
+   |
+43 |   (something_not_imported) // ERROR
+   |    ^--------------------^
+   |
+   = Unbound identifier something_not_imported
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":44:6
+   |
+44 |   (+ something_not_imported some_import)) // ERROR
+   |      ^--------------------^
+   |
+   = Unbound identifier something_not_imported
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":51:41
+   |
+51 | (quasiquote (foo baz undefined (unquote error_me))) // ERROR
+   |                                         ^------^
+   |
+   = Unbound identifier error_me
+
+---
+
+  --> "../check_tests/unbound-identifier.fusion":53:35
+   |
+53 | (define test_case_inner_undefined im_definitely_undefined) // ERROR
+   |                                   ^---------------------^
+   |
+   = Unbound identifier im_definitely_undefined
+
+]

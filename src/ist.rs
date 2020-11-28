@@ -180,6 +180,13 @@ impl IExpr {
         }
     }
 
+    pub fn is_list(&self) -> bool {
+        match self {
+            IExpr::List(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_struct(&self) -> bool {
         match *self {
             IExpr::Struct(_) => true,
@@ -191,6 +198,22 @@ impl IExpr {
         match self {
             IExpr::StructKey(_) => true,
             _ => false,
+        }
+    }
+
+    pub fn is_sexpr(&self) -> bool {
+        match self {
+            IExpr::SExpr(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn list_data<'a>(&'a self) -> &'a ListData {
+        match self {
+            IExpr::List(data) => data,
+            IExpr::SExpr(data) => data,
+            IExpr::Struct(data) => data,
+            _ => panic!("called list_data on a non-list"),
         }
     }
 
@@ -219,6 +242,21 @@ impl IExpr {
                 _ => panic!(),
             },
             _ => panic!(),
+        }
+    }
+
+    pub fn span(&self) -> ShortSpan {
+        match self {
+            IExpr::Atomic(data) => data.span,
+            IExpr::Clob(data) => data.span,
+            IExpr::CommentBlock(data) => data.span,
+            IExpr::CommentLine(data) => data.span,
+            IExpr::List(data) => data.span,
+            IExpr::MultilineString(data) => data.span,
+            IExpr::Newlines(data) => data.span,
+            IExpr::SExpr(data) => data.span,
+            IExpr::Struct(data) => data.span,
+            IExpr::StructKey(data) => data.span,
         }
     }
 }
