@@ -41,11 +41,15 @@ format_multiline_string_contents = true
 fixed_indent_symbols = [
     # Fusion defaults
     "begin",
+    "cond",
     "define",
     "define_syntax",
+    "if",
     "lambda",
     "let",
     "lets",
+    "map",
+    "unless",
     "when",
     "|",
 ]
@@ -53,7 +57,6 @@ fixed_indent_symbols = [
 # Function/macro names that should use fixed indent if their body is long.
 # For example, `if` could be formatted normally if it's short, but formatted like a `define` if long.
 smart_indent_symbols = [
-    "if"
 ]
 "#;
 

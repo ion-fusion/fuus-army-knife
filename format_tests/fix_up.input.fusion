@@ -65,3 +65,8 @@
     asin: asin,
     aiw_id: aiwId,
     vendor_code: vendor_code}}
+
+(define asdf
+  { thing: FOO,
+    other_thing: BAR,
+  })

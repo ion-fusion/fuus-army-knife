@@ -56,23 +56,22 @@ fn clear_empty(mut expr: IExpr) -> IExpr {
 fn fixup_list(items: &mut Vec<IExpr>) -> bool {
     let has_values = items.iter().any(|item| item.is_not_comment_or_newlines());
     let things_before_newline = (&items[..]).count_until(|e| !e.is_newlines(), |e| e.is_newlines());
-    if has_values && things_before_newline == 0 {
-        // Remove the very first newlines instance
-        for i in 0..items.len() {
-            if items[i].is_newlines() {
-                items.remove(i);
-                break;
-            }
+    let should_add_preceding_newline = has_values && things_before_newline == 0;
+
+    // Remove the very first newlines instance
+    for i in 0..items.len() {
+        if items[i].is_newlines() {
+            items.remove(i);
         }
-        // Remove trailing newlines if there's no comment
-        let len = items.len();
-        if len >= 2 {
-            if !items[len - 2].is_comment_line() && items[len - 1].is_newlines() {
-                items.remove(len - 1);
-            }
-        }
-        true
-    } else {
-        false
+        break;
     }
+    // Remove trailing newlines if there's no comment
+    let len = items.len();
+    if len >= 2 {
+        if !items[len - 2].is_comment_line() && items[len - 1].is_newlines() {
+            items.remove(len - 1);
+        }
+    }
+
+    should_add_preceding_newline
 }

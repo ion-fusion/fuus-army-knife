@@ -134,7 +134,8 @@ impl<'i> Formatter<'i> {
             let continuation_indent = find_cursor_pos(&self.output);
             self.output.push_str("'''");
             let value = format_indented_multiline(&trim_indent(&data.value), continuation_indent);
-            self.output.push_str(&value);
+            self.output
+                .push_str(value.trim_end_matches(|c| c == ' ' || c == '\t'));
             if last_is_one_of(&self.output, &['\n']) {
                 self.output.push_str(&repeat(' ', continuation_indent));
             }
