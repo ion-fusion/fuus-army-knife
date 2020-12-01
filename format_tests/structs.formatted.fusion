@@ -1,4 +1,4 @@
-{ }
+{}
 
 { x: 1, y: 2 }
 
@@ -10,18 +10,18 @@
   y:
     2 }
 
-{ x: { y: { z: { } } } }
+{ x: { y: { z: {}}}}
 
 { x:
-  { y:
-    { z: { } } } }
+    { y:
+        { z: {}}}}
 
 { x:
-  { y: { z:
-         { } } } }
+    { y: { z:
+             {}}}}
 
 { x:
-  { y: { z: { } } } }
+    { y: { z: {}}}}
 
 (define foo
   { x: 1,
@@ -30,11 +30,11 @@
 (define foo
   { foo: 1,
     bar:
-    { x: 1 },
+      { x: 1 },
     baz: 2 })
 
-annotated::{ }
-'Crazy Annotation'::{ }
+annotated::{}
+'Crazy Annotation'::{}
 
 { x: /* foo */
-  { y: /* bar */ { z: { } /* baz */ } /* biz */ } }
+    { y: /* bar */ { z: {} /* baz */ } /* biz */ }}

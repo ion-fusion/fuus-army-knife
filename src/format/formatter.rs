@@ -234,8 +234,8 @@ impl<'i> Formatter<'i> {
 
         let empty_continuation = find_cursor_pos(&self.output);
         let key_continuation = empty_continuation + 1;
-        let struct_continuation = key_continuation + 1;
-        let value_continuation = struct_continuation + 2;
+        let nested_struct_continuation = key_continuation + 3;
+        let value_continuation = key_continuation + 3;
 
         self.output.push('{');
         for i in 0..data.items.len() {
@@ -248,7 +248,7 @@ impl<'i> Formatter<'i> {
                     if next.is_struct_key() {
                         self.visit_expr(value, key_continuation);
                     } else if next.is_struct() {
-                        self.visit_expr(value, struct_continuation);
+                        self.visit_expr(value, nested_struct_continuation);
                     } else {
                         self.visit_expr(value, value_continuation);
                     }
@@ -265,7 +265,7 @@ impl<'i> Formatter<'i> {
                 }
             }
         }
-        if !already_has_whitespace_before_cursor(&self.output) {
+        if !last_is_one_of(&self.output, &['{', '}', ' ', '\n']) {
             self.output.push(' ');
         }
         self.output.push_str("}");
@@ -286,15 +286,15 @@ enum IndentType {
     /// Or:
     /// [1,
     ///  2] <-- this indent type
-    /// Or:
-    /// ((foo)
-    ///  (bar))
     EndOfOpening,
     /// (foo (bar)
     ///      (baz)) // <-- this indent type
     EndOfOpeningSymbol(usize),
     /// (define (foo)
     ///   (baz)) // <-- this indent type
+    /// Or:
+    /// ((foo)
+    ///   (bar)) // <-- this indent type
     Fixed,
 
     Undetermined,
@@ -332,8 +332,8 @@ fn calculate_continuation_indent(
                     }
                 }
             }
-        } else {
-            // Otherwise, always use end of opening indent
+        } else if !first.is_sexpr() {
+            // Otherwise, if the first is not an s-expression, use end of opening indent
             indent_type = IndentType::EndOfOpening;
         }
     }

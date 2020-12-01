@@ -51,7 +51,7 @@
  "baz")
 
 ((foo)
- (baz))
+  (baz))
 
 (foobaz
   { something: 1,

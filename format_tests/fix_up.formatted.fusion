@@ -2,8 +2,8 @@
   { x: 1,
     y: 2,
     z:
-    { foo: "asdf",
-      bar: "fdsa" } })
+      { foo: "asdf",
+        bar: "fdsa" }})
 
 { // foo
 }
@@ -25,9 +25,9 @@
       ["asdf",
        "fdsa"] })
 
-{ }
+{}
 
-{ foo: { } }
+{ foo: {}}
 
 []
 
@@ -42,17 +42,17 @@
   { //
     foo: 5,
     baz:
-    { a: 1,
-      b: 2 } }
+      { a: 1,
+        b: 2 }}
   (foo))
 
 { output_assets:
     [{ type: "YJ" }],
   passback_fields:
-  { vendor_file_id: vendor_file_id,
-    asin: asin,
-    aiw_id: aiwId,
-    vendor_code: vendor_code } }
+    { vendor_file_id: vendor_file_id,
+      asin: asin,
+      aiw_id: aiwId,
+      vendor_code: vendor_code }}
 
 (define asdf
   { thing: FOO,
