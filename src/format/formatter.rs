@@ -335,6 +335,8 @@ fn calculate_continuation_indent(
         } else if !first.is_sexpr() {
             // Otherwise, if the first is not an s-expression, use end of opening indent
             indent_type = IndentType::EndOfOpening;
+        } else {
+            indent_type = IndentType::Fixed;
         }
     }
 
