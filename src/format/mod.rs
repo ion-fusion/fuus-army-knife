@@ -22,8 +22,8 @@ pub fn format(fusion_config: &FusionConfig, ist: &IntermediateSyntaxTree) -> Str
 mod tests {
     use super::*;
     use crate::config::new_default_config;
+    use crate::diff_util::human_diff_lines;
     use crate::file::FusionFileContent;
-    use crate::test_util::human_diff_lines;
 
     macro_rules! test {
         ($input:expr, $output:expr) => {

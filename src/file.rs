@@ -17,6 +17,38 @@ pub struct FusionFile {
 }
 
 impl FusionFile {
+    pub fn recursively_load_directory<P: AsRef<Path>>(
+        fusion_config: &FusionConfig,
+        path: P,
+    ) -> Result<Vec<FusionFile>, Error> {
+        let mut fusion_files: Vec<FusionFile> = Vec::new();
+        let directory_walker = ignore::WalkBuilder::new(path.as_ref())
+            .follow_links(true)
+            .sort_by_file_path(|a, b| a.cmp(b))
+            .build();
+        for entry in directory_walker {
+            let entry = entry
+                .map_err(|err| Error::Generic(format!("Failed to read input file: {}", err)))?;
+            let path = entry.path();
+            let extension = path.extension().and_then(|extension| extension.to_str());
+            if !entry
+                .file_type()
+                .map(|file_type| file_type.is_dir())
+                .unwrap_or(true)
+            {
+                if let Some("fusion") = extension {
+                    let contents = FusionFileContent::load(path)
+                        .map_err(|err| Error::Generic(format!("{}", err)))?;
+                    let fusion_file = contents
+                        .parse(fusion_config)
+                        .map_err(|err| Error::Generic(format!("{}", err)))?;
+                    fusion_files.push(fusion_file);
+                }
+            }
+        }
+        Ok(fusion_files)
+    }
+
     pub fn debug_ast(&self) -> String {
         let debug_view = format!("{:#?}", self.ast);
         replace_spans(&self.contents, &debug_view)

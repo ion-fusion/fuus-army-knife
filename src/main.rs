@@ -8,6 +8,7 @@ extern crate serde_derive;
 
 mod ast;
 mod config;
+mod diff_util;
 mod error;
 mod file;
 mod format;
@@ -16,8 +17,6 @@ mod lexer;
 mod parser;
 mod span;
 mod string_util;
-#[cfg(test)]
-mod test_util;
 mod validate;
 
 use crate::config::{load_config, write_default_config, FusionConfig};
@@ -55,6 +54,8 @@ fn main() {
         subcommand_format(&fusion_config, path);
     } else if let Some(_) = matches.subcommand_matches("format-all") {
         subcommand_format_all(&fusion_config);
+    } else if let Some(_) = matches.subcommand_matches("checkstyle-all") {
+        subcommand_checkstyle_all(&fusion_config);
     } else {
         drop(clap_app.print_help());
         println!("\n")
@@ -94,8 +95,11 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
         )
         .subcommand(
             SubCommand::with_name("format-all")
-                .about("recursively formats all Fusion files from the current directory"),
+                .about("recursively formats all Fusion files in the current directory"),
         )
+        .subcommand(SubCommand::with_name("checkstyle-all").about(
+            "recursively checks adherence to format on all Fusion files in the current directory",
+        ))
         .subcommand(SubCommand::with_name("help"))
 }
 
@@ -150,33 +154,35 @@ fn subcommand_format(fusion_config: &FusionConfig, path: &str) {
 }
 
 fn subcommand_format_all(fusion_config: &FusionConfig) {
-    let mut fusion_files: Vec<FusionFile> = Vec::new();
-    let directory_walker = ignore::WalkBuilder::new("./")
-        .follow_links(true)
-        .sort_by_file_path(|a, b| a.cmp(b))
-        .build();
-    for entry in directory_walker {
-        let entry = entry.unwrap_or_else(|err| fail!("Failed to read input file: {}", err));
-        let path = entry.path();
-        let extension = path.extension().and_then(|extension| extension.to_str());
-        if !entry
-            .file_type()
-            .map(|file_type| file_type.is_dir())
-            .unwrap_or(true)
-        {
-            if let Some("fusion") = extension {
-                println!("Examining {:?}...", path);
-                let contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
-                let fusion_file = contents
-                    .parse(fusion_config)
-                    .unwrap_or_else(|err| fail!("{}", err));
-                fusion_files.push(fusion_file);
-            }
-        }
-    }
-
+    let fusion_files = FusionFile::recursively_load_directory(fusion_config, "./")
+        .unwrap_or_else(|err| fail!("{}", err));
     for file in &fusion_files {
         println!("Formatting {:?}...", file.file_name);
         format_file_in_place(fusion_config, file);
+    }
+}
+
+fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
+    let fusion_files = FusionFile::recursively_load_directory(fusion_config, "./")
+        .unwrap_or_else(|err| fail!("{}", err));
+    let mut passed = true;
+    for file in &fusion_files {
+        println!("Checking {:?}...", file.file_name);
+        let formatted = format::format(fusion_config, &file.ist);
+        let expected = formatted.trim_end();
+        let actual = file.contents.trim_end();
+        if expected != actual {
+            println!(
+                "File {:?} doesn't adhere to correct style. See diff to correct below:",
+                file.file_name
+            );
+            println!("{}", diff_util::human_diff_lines(actual, expected));
+            passed = false;
+        }
+    }
+    if !passed {
+        fail!("Checkstyle failed.")
+    } else {
+        println!("All files adhere to correct style.")
     }
 }
