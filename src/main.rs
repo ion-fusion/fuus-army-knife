@@ -25,7 +25,6 @@ use crate::file::{FusionFile, FusionFileContent};
 use clap::{crate_version, App, Arg, SubCommand};
 use std::io::Write;
 use tempfile::NamedTempFile;
-use walkdir::WalkDir;
 
 macro_rules! fail {
     ($($arg:expr),*) => {
@@ -152,14 +151,19 @@ fn subcommand_format(fusion_config: &FusionConfig, path: &str) {
 
 fn subcommand_format_all(fusion_config: &FusionConfig) {
     let mut fusion_files: Vec<FusionFile> = Vec::new();
-    let directory_walker = WalkDir::new(".")
+    let directory_walker = ignore::WalkBuilder::new("./")
         .follow_links(true)
-        .sort_by(|a, b| a.file_name().cmp(b.file_name()));
+        .sort_by_file_path(|a, b| a.cmp(b))
+        .build();
     for entry in directory_walker {
         let entry = entry.unwrap_or_else(|err| fail!("Failed to read input file: {}", err));
         let path = entry.path();
         let extension = path.extension().and_then(|extension| extension.to_str());
-        if !entry.file_type().is_dir() {
+        if !entry
+            .file_type()
+            .map(|file_type| file_type.is_dir())
+            .unwrap_or(true)
+        {
             if let Some("fusion") = extension {
                 println!("Examining {:?}...", path);
                 let contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
