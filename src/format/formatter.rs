@@ -78,7 +78,7 @@ impl<'i> Formatter<'i> {
             }
             match *expr {
                 ClobExpr::Newlines(ref data) => self.visit_newlines(data, continuation_indent),
-                ClobExpr::MultilineString(ref data) => self.visit_multiline_string_no_format(data),
+                ClobExpr::MultilineString(ref data) => self.visit_clob_string(data),
                 ClobExpr::QuotedString(ref data) => self.visit_atomic(data),
             }
         }
@@ -86,6 +86,12 @@ impl<'i> Formatter<'i> {
             self.output.push(' ');
         }
         self.output.push_str("}}");
+    }
+
+    fn visit_clob_string(&mut self, data: &MultilineStringData) {
+        self.output.push_str("'''");
+        self.output.push_str(&data.value);
+        self.output.push_str("'''");
     }
 
     fn visit_comment_block(&mut self, data: &NonAnnotatedStringListData, _next_indent: usize) {
@@ -122,27 +128,21 @@ impl<'i> Formatter<'i> {
         self.output.push_str(&newline(0, next_indent));
     }
 
-    fn visit_multiline_string_no_format(&mut self, data: &MultilineStringData) {
-        self.output.push_str("'''");
-        self.output.push_str(&data.value);
-        self.output.push_str("'''");
-    }
-
     fn visit_multiline_string(&mut self, data: &MultilineStringData) {
         self.visit_annotations(&data.annotations);
-        if self.config.format_multiline_string_contents {
-            let continuation_indent = find_cursor_pos(&self.output);
-            self.output.push_str("'''");
-            let value = format_indented_multiline(&trim_indent(&data.value), continuation_indent);
-            self.output
-                .push_str(value.trim_end_matches(|c| c == ' ' || c == '\t'));
-            if last_is_one_of(&self.output, &['\n']) {
-                self.output.push_str(&repeat(' ', continuation_indent));
-            }
-            self.output.push_str("'''");
+        let continuation_indent = find_cursor_pos(&self.output);
+        self.output.push_str("'''");
+        let value = if self.config.format_multiline_string_contents {
+            format_indented_multiline(&trim_indent(&data.value), continuation_indent)
         } else {
-            self.visit_multiline_string_no_format(data);
+            data.value.clone()
+        };
+        self.output
+            .push_str(value.trim_end_matches(|c| c == ' ' || c == '\t'));
+        if last_is_one_of(&self.output, &['\n']) {
+            self.output.push_str(&repeat(' ', continuation_indent));
         }
+        self.output.push_str("'''");
     }
 
     fn visit_newlines(&mut self, data: &NewlinesData, next_indent: usize) {

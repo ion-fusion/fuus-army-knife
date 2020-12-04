@@ -1,0 +1,7 @@
+// This test runs with config setting `format_multiline_string_contents` set to `false`
+(define (some_function foo baz)
+                '''
+The doc comment has to be at column 0 for Fusion docs to work, but the indent
+of this function is totally wrong.
+                '''
+                (do_something foo baz))

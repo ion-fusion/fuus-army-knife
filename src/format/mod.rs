@@ -27,13 +27,16 @@ mod tests {
 
     macro_rules! test {
         ($input:expr, $output:expr) => {
+            let default_config = new_default_config();
+            test!(&default_config, $input, $output);
+        };
+        ($config:expr, $input:expr, $output:expr) => {
             let input = include_str!($input);
             let expected_output = include_str!($output).trim();
-            let config = new_default_config();
             let file = FusionFileContent::new("test".into(), input.into())
-                .parse(&config)
+                .parse($config)
                 .unwrap_or_else(|error| panic!("Error: {}", error));
-            let actual_output = format(&config, &file.ist).trim().to_string();
+            let actual_output = format($config, &file.ist).trim().to_string();
             if expected_output != &actual_output {
                 let msg = format!(
                     "\nProcessing of {} didn't match expected output in {}:\n{}\n",
@@ -64,9 +67,20 @@ mod tests {
 
     #[test]
     fn multiline_string() {
+        let mut config = new_default_config();
+        config.format_multiline_string_contents = true;
         test!(
+            &config,
             "../../format_tests/multiline_string.input.fusion",
             "../../format_tests/multiline_string.formatted.fusion"
+        );
+    }
+
+    #[test]
+    fn multiline_string_no_change_whitespace() {
+        test!(
+            "../../format_tests/multiline_string_no_change_whitespace.input.fusion",
+            "../../format_tests/multiline_string_no_change_whitespace.formatted.fusion"
         );
     }
 

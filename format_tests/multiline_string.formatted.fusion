@@ -1,3 +1,4 @@
+// This test runs with config setting `format_multiline_string_contents` set to `true`
 '''foo bar'''
 
 '''foo

@@ -34,7 +34,9 @@ const DEFAULT_CONFIG: &'static str = r#"
 newline_mode = "fix-up"
 
 # If true, multi-line Fusion strings (''') will have their whitespace modified
-format_multiline_string_contents = true
+# Recommend leaving this as `false` to preserve Fusion doc strings until
+# the documentation system can handle indented doc strings correctly.
+format_multiline_string_contents = false
 
 # Function/macro names that should have a fixed indent for their body.
 # For example, `define`, `begin`, and `let`, may want a fixed indent to avoid crazy indentation levels.
@@ -43,7 +45,12 @@ fixed_indent_symbols = [
     "begin",
     "cond",
     "define",
+    "define_check",
     "define_syntax",
+    "defpub",
+    "defpub_j",
+    "defpub_j_syntax",
+    "defpub_syntax",
     "if",
     "lambda",
     "let",
