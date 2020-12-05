@@ -1,0 +1,271 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.struct",
+            annotations: [],
+            value: "null.struct",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.struct",
+            annotations: [
+                "annotated::",
+            ],
+            value: "null.struct",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Struct(
+        ListData {
+            span: "{ }",
+            annotations: [
+                "annotated::",
+            ],
+            items: [],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Struct(
+        ListData {
+            span: "{ first : \"Tom\" , last: other_annotation..." (truncated),
+            annotations: [],
+            items: [
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "first",
+                        value: "first",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: QuotedString,
+                        span: "\"Tom\"",
+                        annotations: [],
+                        value: "Tom",
+                    },
+                ),
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "last",
+                        value: "last",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: QuotedString,
+                        span: "\"Riddle\"",
+                        annotations: [
+                            "other_annotation::",
+                        ],
+                        value: "Riddle",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Struct(
+        ListData {
+            span: "{\"first\":\"Tom\",\"last\":\"Riddle\"}",
+            annotations: [],
+            items: [
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "\"first\"",
+                        value: "\"first\"",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: QuotedString,
+                        span: "\"Tom\"",
+                        annotations: [],
+                        value: "Tom",
+                    },
+                ),
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "\"last\"",
+                        value: "\"last\"",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: QuotedString,
+                        span: "\"Riddle\"",
+                        annotations: [],
+                        value: "Riddle",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Struct(
+        ListData {
+            span: "{center:{x:1.0, y:12.5}, radius:3}",
+            annotations: [],
+            items: [
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "center",
+                        value: "center",
+                    },
+                ),
+                Struct(
+                    ListData {
+                        span: "{x:1.0, y:12.5}",
+                        annotations: [],
+                        items: [
+                            StructKey(
+                                NonAnnotatedStringData {
+                                    span: "x",
+                                    value: "x",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Real,
+                                    span: "1.0",
+                                    annotations: [],
+                                    value: "1.0",
+                                },
+                            ),
+                            StructKey(
+                                NonAnnotatedStringData {
+                                    span: "y",
+                                    value: "y",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Real,
+                                    span: "12.5",
+                                    annotations: [],
+                                    value: "12.5",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "radius",
+                        value: "radius",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "3",
+                        annotations: [],
+                        value: "3",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Struct(
+        ListData {
+            span: "{ x:1, }",
+            annotations: [],
+            items: [
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "x",
+                        value: "x",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "1",
+                        annotations: [],
+                        value: "1",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Struct(
+        ListData {
+            span: "{ \"\":42 }",
+            annotations: [],
+            items: [
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "\"\"",
+                        value: "\"\"",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "42",
+                        annotations: [],
+                        value: "42",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Struct(
+        ListData {
+            span: "{ x:1, x:null.int }",
+            annotations: [],
+            items: [
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "x",
+                        value: "x",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "1",
+                        annotations: [],
+                        value: "1",
+                    },
+                ),
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "x",
+                        value: "x",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Null,
+                        span: "null.int",
+                        annotations: [],
+                        value: "null.int",
+                    },
+                ),
+            ],
+        },
+    ),
+]

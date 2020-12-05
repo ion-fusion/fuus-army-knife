@@ -1,16 +1,12 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
-use crate::ist::*;
+use crate::ast::*;
 
-pub fn fixup_ist(ist: &IntermediateSyntaxTree) -> IntermediateSyntaxTree {
-    IntermediateSyntaxTree::new(fixup_exprs(&ist.expressions))
+pub fn fixup_ast(ast: &Vec<Expr>) -> Vec<Expr> {
+    ast.iter().cloned().map(|expr| fixup_expr(expr)).collect()
 }
 
-fn fixup_exprs(exprs: &[IExpr]) -> Vec<IExpr> {
-    exprs.iter().cloned().map(|expr| fixup_expr(expr)).collect()
-}
-
-fn fixup_expr(mut expr: IExpr) -> IExpr {
-    use IExpr::*;
+fn fixup_expr(mut expr: Expr) -> Expr {
+    use Expr::*;
 
     expr = clear_empty(expr);
     match expr {
@@ -22,7 +18,7 @@ fn fixup_expr(mut expr: IExpr) -> IExpr {
                 match &mut data.items[i] {
                     SExpr(ref mut sub_data) | List(ref mut sub_data) | Struct(ref mut sub_data) => {
                         if fixup_list(&mut sub_data.items) && !last_is_newlines {
-                            let newlines = IExpr::Newlines(NewlinesData::new(sub_data.span, 1));
+                            let newlines = Expr::Newlines(NewlinesData::new(sub_data.span, 1));
                             data.items.insert(i, newlines);
                             i += 1;
                         }
@@ -39,8 +35,8 @@ fn fixup_expr(mut expr: IExpr) -> IExpr {
     expr
 }
 
-fn clear_empty(mut expr: IExpr) -> IExpr {
-    use IExpr::*;
+fn clear_empty(mut expr: Expr) -> Expr {
+    use Expr::*;
 
     match expr {
         SExpr(ref mut data) | List(ref mut data) | Struct(ref mut data) => {
@@ -53,7 +49,7 @@ fn clear_empty(mut expr: IExpr) -> IExpr {
     expr
 }
 
-fn fixup_list(items: &mut Vec<IExpr>) -> bool {
+fn fixup_list(items: &mut Vec<Expr>) -> bool {
     let has_values = items.iter().any(|item| item.is_not_comment_or_newlines());
     let things_before_newline = (&items[..]).count_until(|e| !e.is_newlines(), |e| e.is_newlines());
     let should_add_preceding_newline = has_values && things_before_newline == 0;

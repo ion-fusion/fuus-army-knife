@@ -1,7 +1,8 @@
 [package]
 name = "fuusak"
-version = "0.1.0"
 edition = "2018"
+
+version = "0.1.0"
 
 [dependencies]
 clap = "2.33"

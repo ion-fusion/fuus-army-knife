@@ -1,0 +1,63 @@
+[
+    Clob(
+        ClobData {
+            span: "{{ \"foo bar baz\" }}",
+            annotations: [],
+            clobs: [
+                QuotedString(
+                    AtomicData {
+                        typ: QuotedString,
+                        span: "\"foo bar baz\"",
+                        annotations: [],
+                        value: "foo bar baz",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Clob(
+        ClobData {
+            span: "{{\n   '''foo bar'''\n   \"bar foo\"\n   '''\n..." (truncated),
+            annotations: [],
+            clobs: [
+                Newlines(
+                    NewlinesData { "\n   ", newline_count: 1 },
+                ),
+                MultilineString(
+                    MultilineStringData {
+                        span: "'''foo bar'''",
+                        annotations: [],
+                        value: "foo bar",
+                    },
+                ),
+                Newlines(
+                    NewlinesData { "\n   ", newline_count: 1 },
+                ),
+                QuotedString(
+                    AtomicData {
+                        typ: QuotedString,
+                        span: "\"bar foo\"",
+                        annotations: [],
+                        value: "bar foo",
+                    },
+                ),
+                Newlines(
+                    NewlinesData { "\n   ", newline_count: 1 },
+                ),
+                MultilineString(
+                    MultilineStringData {
+                        span: "'''\n      baz\n   '''",
+                        annotations: [],
+                        value: "\n      baz\n   ",
+                    },
+                ),
+                Newlines(
+                    NewlinesData { "\n", newline_count: 1 },
+                ),
+            ],
+        },
+    ),
+]

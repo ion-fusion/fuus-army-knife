@@ -1,6 +1,6 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+use crate::ast::*;
 use crate::config::FusionConfig;
-use crate::ist::*;
 use crate::string_util::{
     already_has_whitespace_before_cursor, find_cursor_pos, format_indented_multiline,
     last_is_one_of, repeat, trim_indent,
@@ -18,7 +18,7 @@ impl<'i> Formatter<'i> {
         }
     }
 
-    pub fn format(&mut self, exprs: &Vec<IExpr>) {
+    pub fn format(&mut self, exprs: &Vec<Expr>) {
         self.visit_exprs(exprs, 0);
     }
 
@@ -29,24 +29,24 @@ impl<'i> Formatter<'i> {
             .fold(String::new(), |l, r| l + r + "\n")
     }
 
-    fn visit_exprs(&mut self, exprs: &Vec<IExpr>, next_indent: usize) {
+    fn visit_exprs(&mut self, exprs: &Vec<Expr>, next_indent: usize) {
         for expr in exprs {
             self.visit_expr(expr, next_indent);
         }
     }
 
-    fn visit_expr(&mut self, expr: &IExpr, next_indent: usize) {
+    fn visit_expr(&mut self, expr: &Expr, next_indent: usize) {
         match expr {
-            IExpr::Atomic(data) => self.visit_atomic(data),
-            IExpr::Clob(data) => self.visit_clob(data, next_indent),
-            IExpr::CommentBlock(data) => self.visit_comment_block(data, next_indent),
-            IExpr::CommentLine(data) => self.visit_comment_line(data, next_indent),
-            IExpr::List(data) => self.visit_list(data),
-            IExpr::MultilineString(data) => self.visit_multiline_string(data),
-            IExpr::Newlines(data) => self.visit_newlines(data, next_indent),
-            IExpr::SExpr(data) => self.visit_sexpr(data),
-            IExpr::Struct(data) => self.visit_struct(data),
-            IExpr::StructKey(data) => self.visit_struct_key(data),
+            Expr::Atomic(data) => self.visit_atomic(data),
+            Expr::Clob(data) => self.visit_clob(data, next_indent),
+            Expr::CommentBlock(data) => self.visit_comment_block(data, next_indent),
+            Expr::CommentLine(data) => self.visit_comment_line(data, next_indent),
+            Expr::List(data) => self.visit_list(data),
+            Expr::MultilineString(data) => self.visit_multiline_string(data),
+            Expr::Newlines(data) => self.visit_newlines(data, next_indent),
+            Expr::SExpr(data) => self.visit_sexpr(data),
+            Expr::Struct(data) => self.visit_struct(data),
+            Expr::StructKey(data) => self.visit_struct_key(data),
         }
     }
 
@@ -152,8 +152,8 @@ impl<'i> Formatter<'i> {
 
     // Complicated logic for determining whitespace between s-expression members due to
     // the inconsistent formatting of `|` lambda argument lists
-    fn bind_whitespace<'a>(&self, exprs: &'a [IExpr]) -> Vec<(&'a IExpr, bool)> {
-        let is_arg_symbol = |expr: &IExpr| expr.is_symbol() && expr.symbol_value() == "|";
+    fn bind_whitespace<'a>(&self, exprs: &'a [Expr]) -> Vec<(&'a Expr, bool)> {
+        let is_arg_symbol = |expr: &Expr| expr.is_symbol() && expr.symbol_value() == "|";
 
         let mut bound = Vec::new();
         let mut first_is_arg_list = false;
@@ -302,7 +302,7 @@ enum IndentType {
 
 fn calculate_continuation_indent(
     config: &FusionConfig,
-    exprs: &[IExpr],
+    exprs: &[Expr],
     next_indent: usize,
 ) -> usize {
     // Figure out what indentation would be without any config

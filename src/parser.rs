@@ -22,10 +22,15 @@ pub fn parse<'i, P: AsRef<Path>>(
     visit_pairs(parse_result?.next().unwrap().into_inner(), config)
 }
 
-macro_rules! simple_value_node {
-    ($expr_type:ident, $pair: ident) => {
-        Ok(vec![Expr::$expr_type(ValueNode::new(
-            $pair.as_span().into(),
+macro_rules! atomic {
+    ($expr_type:expr, $pair: ident) => {
+        atomic!($expr_type, $pair, $pair.as_span())
+    };
+    ($expr_type:expr, $pair: expr, $span: expr) => {
+        Ok(vec![Expr::Atomic(AtomicData::new(
+            $expr_type,
+            $span.into(),
+            Vec::new(),
             $pair.as_str().into(),
         ))])
     };
@@ -46,20 +51,26 @@ fn visit_pairs<'i>(pairs: FPairs<'i>, config: &FusionConfig) -> ParseResult {
 }
 
 fn visit_blob<'i>(pair: FPair<'i>) -> ParseResult {
-    let span = pair.as_span();
-    result!(
-        Blob,
-        ValueNode::new(
-            span.into(),
-            pair.into_inner().next().unwrap().as_str().trim().into()
-        )
-    )
+    let span: ShortSpan = pair.as_span().into();
+    let inner: String = pair.into_inner().next().unwrap().as_str().trim().into();
+    atomic!(AtomicType::Blob, inner, span)
 }
 
 fn visit_clob<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
-    let inner_exprs: Result<Vec<Expr>, Error> = visit_pairs(pair.into_inner(), config);
-    result!(Clob, ExpressionsNode::new(span.into(), inner_exprs?))
+    let inner_exprs: Vec<ClobExpr> = visit_pairs(pair.into_inner(), config)?
+        .into_iter()
+        .map(|expr| match expr {
+            Expr::MultilineString(data) => ClobExpr::MultilineString(data),
+            Expr::Atomic(data) => match data.typ {
+                AtomicType::QuotedString => ClobExpr::QuotedString(data),
+                _ => unreachable!(),
+            },
+            Expr::Newlines(data) => ClobExpr::Newlines(data),
+            _ => unreachable!(),
+        })
+        .collect();
+    result!(Clob, ClobData::new(span.into(), Vec::new(), inner_exprs))
 }
 
 fn block_comment_lines(comment: &str) -> Vec<String> {
@@ -93,21 +104,21 @@ fn visit_comment<'i>(pair: FPair<'i>) -> ParseResult {
         .unwrap();
     match reparsed.as_rule() {
         Rule::line_comment => Ok(vec![
-            Expr::CommentLine(NonAnnotatedValue::new(
+            Expr::CommentLine(NonAnnotatedStringData::new(
                 span,
                 pair.as_str().trim_end().into(),
             )),
-            Expr::Newlines(NewlinesNode::new(span, 1)),
+            Expr::Newlines(NewlinesData::new(span, 1)),
         ]),
         Rule::block_comment => result!(
             CommentBlock,
-            NonAnnotatedValues::new(span, block_comment_lines(pair.as_str()),)
+            NonAnnotatedStringListData::new(span, block_comment_lines(pair.as_str()))
         ),
         _ => unreachable!(),
     }
 }
 
-fn attach_annotations<'i>(exprs: Vec<Expr>, annotations: &Vec<String>) -> Vec<Expr> {
+fn attach_annotations(exprs: Vec<Expr>, annotations: &Vec<String>) -> Vec<Expr> {
     exprs
         .into_iter()
         .map(|expr| expr.attach_annotations(annotations.clone()))
@@ -137,25 +148,28 @@ fn visit_expr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
 fn visit_list<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
     let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
-    result!(List, ExpressionsNode::new(span.into(), sub_exprs))
+    result!(List, ListData::new(span.into(), Vec::new(), sub_exprs))
 }
 
 fn visit_sexpr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
     let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
-    result!(SExpr, ExpressionsNode::new(span.into(), sub_exprs))
+    result!(SExpr, ListData::new(span.into(), Vec::new(), sub_exprs))
 }
 
 fn visit_short_string<'i>(pair: FPair<'i>) -> ParseResult {
     let span = pair.as_span();
     let string_val = pair.into_inner().as_str().to_string();
-    result!(QuotedString, ValueNode::new(span.into(), string_val))
+    atomic!(AtomicType::QuotedString, string_val, span)
 }
 
 fn visit_long_string<'i>(pair: FPair<'i>) -> ParseResult {
     let span = pair.as_span();
     let string_val = pair.into_inner().as_str().to_string();
-    result!(MultilineString, ValueNode::new(span.into(), string_val))
+    result!(
+        MultilineString,
+        MultilineStringData::new(span.into(), Vec::new(), string_val)
+    )
 }
 
 fn visit_string_inner<'i>(pair: FPair<'i>) -> ParseResult {
@@ -172,19 +186,16 @@ fn visit_string<'i>(pair: FPair<'i>) -> ParseResult {
 
 fn visit_structure_key<'i>(pair: FPair<'i>) -> ParseResult {
     let inner = pair.into_inner().next().unwrap();
-    simple_value_node!(StructKey, inner)
-}
-
-fn visit_structure_member<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
-    let span = pair.as_span();
-    let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
-    result!(StructMember, StructMemberNode::new(span.into(), sub_exprs))
+    result!(
+        StructKey,
+        NonAnnotatedStringData::new(inner.as_span().into(), inner.as_str().into())
+    )
 }
 
 fn visit_structure<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     let span = pair.as_span();
     let sub_exprs: Vec<Expr> = visit_pairs(pair.into_inner(), config)?;
-    result!(Struct, ExpressionsNode::new(span.into(), sub_exprs))
+    result!(Struct, ListData::new(span.into(), Vec::new(), sub_exprs))
 }
 
 fn visit_whitespace<'i>(pair: FPair<'i>) -> ParseResult {
@@ -193,7 +204,7 @@ fn visit_whitespace<'i>(pair: FPair<'i>) -> ParseResult {
     if newline_count > 0 {
         return result!(
             Newlines,
-            NewlinesNode::new(span.into(), newline_count as u16)
+            NewlinesData::new(span.into(), newline_count as u16)
         );
     }
     Ok(Vec::new())
@@ -202,21 +213,21 @@ fn visit_whitespace<'i>(pair: FPair<'i>) -> ParseResult {
 fn visit_pair<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
     match pair.as_rule() {
         Rule::blob => visit_blob(pair),
-        Rule::boolean => simple_value_node!(Boolean, pair),
+        Rule::boolean => atomic!(AtomicType::Boolean, pair),
         Rule::clob => visit_clob(pair, config),
         Rule::COMMENT => visit_comment(pair),
         Rule::expr => visit_expr(pair, config),
-        Rule::integer => simple_value_node!(Integer, pair),
+        Rule::integer => atomic!(AtomicType::Integer, pair),
         Rule::list => visit_list(pair, config),
-        Rule::null => simple_value_node!(Null, pair),
-        Rule::real => simple_value_node!(Real, pair),
+        Rule::null => atomic!(AtomicType::Null, pair),
+        Rule::real => atomic!(AtomicType::Real, pair),
         Rule::sexpr => visit_sexpr(pair, config),
         Rule::string => visit_string(pair),
         Rule::structure => visit_structure(pair, config),
         Rule::struct_key => visit_structure_key(pair),
-        Rule::struct_member => visit_structure_member(pair, config),
-        Rule::symbol => simple_value_node!(Symbol, pair),
-        Rule::timestamp => simple_value_node!(Timestamp, pair),
+        Rule::struct_member => visit_pairs(pair.into_inner(), config),
+        Rule::symbol => atomic!(AtomicType::Symbol, pair),
+        Rule::timestamp => atomic!(AtomicType::Timestamp, pair),
         Rule::WHITESPACE => visit_whitespace(pair),
         Rule::EOI => Ok(Vec::new()),
 
@@ -345,7 +356,7 @@ mod parser_tests {
             if let Err(error) = result {
                 assert!(false, "Error: {}", error);
             } else {
-                let file = FusionFile::test_file_with_ast(input, result.unwrap());
+                let file = FusionFile::new("test".into(), input.into(), result.unwrap());
                 let actual_output = file.debug_ast();
                 if expected_output != &actual_output {
                     let msg = format!(
@@ -363,108 +374,108 @@ mod parser_tests {
     #[test]
     fn test_blob() {
         test!(
-            "../ast_tests/blob.input.fusion",
-            "../ast_tests/blob.ast.txt"
+            "../parser_tests/blob.input.fusion",
+            "../parser_tests/blob.ast.txt"
         );
     }
 
     #[test]
     fn test_boolean() {
         test!(
-            "../ast_tests/boolean.input.fusion",
-            "../ast_tests/boolean.ast.txt"
+            "../parser_tests/boolean.input.fusion",
+            "../parser_tests/boolean.ast.txt"
         );
     }
 
     #[test]
     fn test_comment() {
         test!(
-            "../ast_tests/comment.input.fusion",
-            "../ast_tests/comment.ast.txt"
+            "../parser_tests/comment.input.fusion",
+            "../parser_tests/comment.ast.txt"
         );
     }
 
     #[test]
     fn test_clob() {
         test!(
-            "../ast_tests/clob.input.fusion",
-            "../ast_tests/clob.ast.txt"
+            "../parser_tests/clob.input.fusion",
+            "../parser_tests/clob.ast.txt"
         );
     }
 
     #[test]
     fn test_mixed() {
         test!(
-            "../ast_tests/mixed.input.fusion",
-            "../ast_tests/mixed.ast.txt"
+            "../parser_tests/mixed.input.fusion",
+            "../parser_tests/mixed.ast.txt"
         );
     }
 
     #[test]
     fn test_integer() {
         test!(
-            "../ast_tests/integer.input.fusion",
-            "../ast_tests/integer.ast.txt"
+            "../parser_tests/integer.input.fusion",
+            "../parser_tests/integer.ast.txt"
         );
     }
 
     #[test]
     fn test_list() {
         test!(
-            "../ast_tests/list.input.fusion",
-            "../ast_tests/list.ast.txt"
+            "../parser_tests/list.input.fusion",
+            "../parser_tests/list.ast.txt"
         );
     }
 
     #[test]
     fn test_real() {
         test!(
-            "../ast_tests/real.input.fusion",
-            "../ast_tests/real.ast.txt"
+            "../parser_tests/real.input.fusion",
+            "../parser_tests/real.ast.txt"
         );
     }
 
     #[test]
     fn test_sexp() {
         test!(
-            "../ast_tests/sexp.input.fusion",
-            "../ast_tests/sexp.ast.txt"
+            "../parser_tests/sexp.input.fusion",
+            "../parser_tests/sexp.ast.txt"
         );
     }
 
     #[test]
     fn test_timestamp() {
         test!(
-            "../ast_tests/timestamp.input.fusion",
-            "../ast_tests/timestamp.ast.txt"
+            "../parser_tests/timestamp.input.fusion",
+            "../parser_tests/timestamp.ast.txt"
         );
     }
 
     #[test]
     fn test_operators() {
         test!(
-            "../ast_tests/operators.input.fusion",
-            "../ast_tests/operators.ast.txt"
+            "../parser_tests/operators.input.fusion",
+            "../parser_tests/operators.ast.txt"
         );
     }
 
     #[test]
     fn test_symbol() {
         test!(
-            "../ast_tests/symbol.input.fusion",
-            "../ast_tests/symbol.ast.txt"
+            "../parser_tests/symbol.input.fusion",
+            "../parser_tests/symbol.ast.txt"
         );
     }
 
     #[test]
     fn test_structure() {
         test!(
-            "../ast_tests/structure.input.fusion",
-            "../ast_tests/structure.ast.txt"
+            "../parser_tests/structure.input.fusion",
+            "../parser_tests/structure.ast.txt"
         );
         test!(
-            "../ast_tests/complex-struct.input.fusion",
-            "../ast_tests/complex-struct.ast.txt"
+            "../parser_tests/complex-struct.input.fusion",
+            "../parser_tests/complex-struct.ast.txt"
         );
     }
 }

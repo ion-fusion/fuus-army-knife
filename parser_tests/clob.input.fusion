@@ -1,0 +1,8 @@
+{{ "foo bar baz" }}
+{{
+   '''foo bar'''
+   "bar foo"
+   '''
+      baz
+   '''
+}}

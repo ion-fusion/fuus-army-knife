@@ -12,12 +12,10 @@ mod diff_util;
 mod error;
 mod file;
 mod format;
-mod ist;
 mod lexer;
 mod parser;
 mod span;
 mod string_util;
-mod validate;
 
 use crate::config::{load_config, write_default_config, FusionConfig};
 use crate::file::{FusionFile, FusionFileContent};
@@ -41,12 +39,9 @@ fn main() {
     let config_file_name = matches.value_of("config").unwrap_or_else(|| "fuusak.toml");
     let fusion_config = load_config(config_file_name).unwrap_or_else(|error| fail!("{}", error));
 
-    if let Some(matches) = matches.subcommand_matches("debug-ast") {
+    if let Some(matches) = matches.subcommand_matches("debug-parser") {
         let path = matches.value_of("FILE").unwrap();
-        subcommand_debug_ast(&fusion_config, path);
-    } else if let Some(matches) = matches.subcommand_matches("debug-ist") {
-        let path = matches.value_of("FILE").unwrap();
-        subcommand_debug_ist(&fusion_config, path);
+        subcommand_debug_parser(&fusion_config, path);
     } else if let Some(_) = matches.subcommand_matches("create-config") {
         subcommand_create_config();
     } else if let Some(matches) = matches.subcommand_matches("format") {
@@ -64,7 +59,7 @@ fn main() {
 
 fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Fuus Army Knife (fuusak)")
-        .version("0.1")
+        .version(crate_version!())
         .about("A Fusion auto-formatter")
         .arg(
             Arg::with_name("config")
@@ -75,13 +70,8 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
                 .help("Specifies the config file to use"),
         )
         .subcommand(
-            SubCommand::with_name("debug-ast")
-                .about("outputs AST of a Fusion file")
-                .arg(Arg::with_name("FILE").required(true).index(1)),
-        )
-        .subcommand(
-            SubCommand::with_name("debug-ist")
-                .about("outputs IST of a Fusion file")
+            SubCommand::with_name("debug-parser")
+                .about("outputs parsed abstract syntax tree of a Fusion file")
                 .arg(Arg::with_name("FILE").required(true).index(1)),
         )
         .subcommand(
@@ -103,20 +93,12 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(SubCommand::with_name("help"))
 }
 
-fn subcommand_debug_ast(fusion_config: &FusionConfig, path: &str) {
-    let file_content = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
-    let file = file_content
-        .parse(fusion_config)
-        .unwrap_or_else(|err| fail!("{}", err));
-    println!("{}", file.debug_ast());
-}
-
-fn subcommand_debug_ist(fusion_config: &FusionConfig, path: &str) {
+fn subcommand_debug_parser(fusion_config: &FusionConfig, path: &str) {
     let file_contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
     let file = file_contents
         .parse(fusion_config)
         .unwrap_or_else(|err| fail!("{}", err));
-    println!("{}", file.debug_ist());
+    println!("{}", file.debug_ast());
 }
 
 fn subcommand_create_config() {
@@ -124,7 +106,7 @@ fn subcommand_create_config() {
 }
 
 fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) {
-    let formatted = format::format(fusion_config, &fusion_file.ist);
+    let formatted = format::format(fusion_config, &fusion_file.ast);
 
     // Write formatted to a temp file
     let mut temp_file: NamedTempFile =
@@ -168,7 +150,7 @@ fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
     let mut passed = true;
     for file in &fusion_files {
         println!("Checking {:?}...", file.file_name);
-        let formatted = format::format(fusion_config, &file.ist);
+        let formatted = format::format(fusion_config, &file.ast);
         let expected = formatted.trim_end();
         let actual = file.contents.trim_end();
         if expected != actual {

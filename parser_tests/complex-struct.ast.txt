@@ -1,0 +1,168 @@
+[
+    Struct(
+        ListData {
+            span: "{ foo:\n  { baz: // some comment\n    { as..." (truncated),
+            annotations: [],
+            items: [
+                StructKey(
+                    NonAnnotatedStringData {
+                        span: "foo",
+                        value: "foo",
+                    },
+                ),
+                Newlines(
+                    NewlinesData { "\n  ", newline_count: 1 },
+                ),
+                Struct(
+                    ListData {
+                        span: "{ baz: // some comment\n    { asdf: /* co..." (truncated),
+                        annotations: [],
+                        items: [
+                            StructKey(
+                                NonAnnotatedStringData {
+                                    span: "baz",
+                                    value: "baz",
+                                },
+                            ),
+                            CommentLine(
+                                NonAnnotatedStringData {
+                                    span: "// some comment\n",
+                                    value: "// some comment",
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "// some comment\n", newline_count: 1 },
+                            ),
+                            Struct(
+                                ListData {
+                                    span: "{ asdf: /* comment */ [1, 2] }",
+                                    annotations: [],
+                                    items: [
+                                        StructKey(
+                                            NonAnnotatedStringData {
+                                                span: "asdf",
+                                                value: "asdf",
+                                            },
+                                        ),
+                                        CommentBlock(
+                                            NonAnnotatedStringListData {
+                                                span: "/* comment */",
+                                                value: [
+                                                    "comment",
+                                                ],
+                                            },
+                                        ),
+                                        List(
+                                            ListData {
+                                                span: "[1, 2]",
+                                                annotations: [],
+                                                items: [
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Integer,
+                                                            span: "1",
+                                                            annotations: [],
+                                                            value: "1",
+                                                        },
+                                                    ),
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Integer,
+                                                            span: "2",
+                                                            annotations: [],
+                                                            value: "2",
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "\n  ", newline_count: 1 },
+                            ),
+                            CommentLine(
+                                NonAnnotatedStringData {
+                                    span: "// another comment\n",
+                                    value: "// another comment",
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "// another comment\n", newline_count: 1 },
+                            ),
+                            StructKey(
+                                NonAnnotatedStringData {
+                                    span: "something",
+                                    value: "something",
+                                },
+                            ),
+                            SExpr(
+                                ListData {
+                                    span: "(put { \"bar\": 5 } /* comment */ 'another..." (truncated),
+                                    annotations: [],
+                                    items: [
+                                        Atomic(
+                                            AtomicData {
+                                                typ: Symbol,
+                                                span: "put",
+                                                annotations: [],
+                                                value: "put",
+                                            },
+                                        ),
+                                        Struct(
+                                            ListData {
+                                                span: "{ \"bar\": 5 }",
+                                                annotations: [],
+                                                items: [
+                                                    StructKey(
+                                                        NonAnnotatedStringData {
+                                                            span: "\"bar\"",
+                                                            value: "\"bar\"",
+                                                        },
+                                                    ),
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Integer,
+                                                            span: "5",
+                                                            annotations: [],
+                                                            value: "5",
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        CommentBlock(
+                                            NonAnnotatedStringListData {
+                                                span: "/* comment */",
+                                                value: [
+                                                    "comment",
+                                                ],
+                                            },
+                                        ),
+                                        Atomic(
+                                            AtomicData {
+                                                typ: Symbol,
+                                                span: "'another key'",
+                                                annotations: [],
+                                                value: "\'another key\'",
+                                            },
+                                        ),
+                                        Atomic(
+                                            AtomicData {
+                                                typ: Integer,
+                                                span: "10",
+                                                annotations: [],
+                                                value: "10",
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            ],
+        },
+    ),
+]

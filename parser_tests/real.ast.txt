@@ -1,0 +1,142 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.decimal",
+            annotations: [],
+            value: "null.decimal",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.float",
+            annotations: [],
+            value: "null.float",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "0.123",
+            annotations: [],
+            value: "0.123",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "-0.12e4",
+            annotations: [],
+            value: "-0.12e4",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "-0.12d4",
+            annotations: [],
+            value: "-0.12d4",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "0E0",
+            annotations: [],
+            value: "0E0",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "0D0",
+            annotations: [],
+            value: "0D0",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "0.",
+            annotations: [],
+            value: "0.",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "-0e0",
+            annotations: [],
+            value: "-0e0",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "-0d0",
+            annotations: [],
+            value: "-0d0",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "-0.",
+            annotations: [],
+            value: "-0.",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "-0d-1",
+            annotations: [],
+            value: "-0d-1",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Real,
+            span: "123_456.789_012",
+            annotations: [],
+            value: "123_456.789_012",
+        },
+    ),
+]

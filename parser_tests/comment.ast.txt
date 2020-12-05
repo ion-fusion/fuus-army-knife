@@ -1,0 +1,40 @@
+[
+    CommentLine(
+        NonAnnotatedStringData {
+            span: "// Some comment\n",
+            value: "// Some comment",
+        },
+    ),
+    Newlines(
+        NewlinesData { "// Some comment\n", newline_count: 1 },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    CommentBlock(
+        NonAnnotatedStringListData {
+            span: "/* Single-line block comment */",
+            value: [
+                "Single-line block comment",
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    CommentBlock(
+        NonAnnotatedStringListData {
+            span: "/*\n * A multi-line block comment\n * //\n ..." (truncated),
+            value: [
+                "",
+                "A multi-line block comment",
+                "//",
+                "With another line in it",
+                "",
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+]

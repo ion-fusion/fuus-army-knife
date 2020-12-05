@@ -1,0 +1,9 @@
+null.struct
+annotated::null.struct
+annotated::{ }
+{ first : "Tom" , last: other_annotation::"Riddle" }
+{"first":"Tom","last":"Riddle"}
+{center:{x:1.0, y:12.5}, radius:3}
+{ x:1, }
+{ "":42 }
+{ x:1, x:null.int }

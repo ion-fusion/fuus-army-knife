@@ -1,0 +1,32 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.bool",
+            annotations: [],
+            value: "null.bool",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Boolean,
+            span: "true",
+            annotations: [],
+            value: "true",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Boolean,
+            span: "false",
+            annotations: [],
+            value: "false",
+        },
+    ),
+]

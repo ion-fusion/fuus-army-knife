@@ -1,0 +1,136 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.list",
+            annotations: [],
+            value: "null.list",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    List(
+        ListData {
+            span: "[]",
+            annotations: [],
+            items: [],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    List(
+        ListData {
+            span: "[1, 2, 3]",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "1",
+                        annotations: [],
+                        value: "1",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "2",
+                        annotations: [],
+                        value: "2",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "3",
+                        annotations: [],
+                        value: "3",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    List(
+        ListData {
+            span: "[ 1 , two ]",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "1",
+                        annotations: [],
+                        value: "1",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "two",
+                        annotations: [],
+                        value: "two",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    List(
+        ListData {
+            span: "[a , [b]]",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "a",
+                        annotations: [],
+                        value: "a",
+                    },
+                ),
+                List(
+                    ListData {
+                        span: "[b]",
+                        annotations: [],
+                        items: [
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "b",
+                                    annotations: [],
+                                    value: "b",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    List(
+        ListData {
+            span: "[ 1.2, ]",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Real,
+                        span: "1.2",
+                        annotations: [],
+                        value: "1.2",
+                    },
+                ),
+            ],
+        },
+    ),
+]

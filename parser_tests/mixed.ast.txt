@@ -1,0 +1,455 @@
+[
+    CommentLine(
+        NonAnnotatedStringData {
+            span: "// Add 1 and 2\n",
+            value: "// Add 1 and 2",
+        },
+    ),
+    Newlines(
+        NewlinesData { "// Add 1 and 2\n", newline_count: 1 },
+    ),
+    SExpr(
+        ListData {
+            span: "(+ 1 2)",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "+",
+                        annotations: [],
+                        value: "+",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "1",
+                        annotations: [],
+                        value: "1",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "2",
+                        annotations: [],
+                        value: "2",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    CommentLine(
+        NonAnnotatedStringData {
+            span: "// Define a function\n",
+            value: "// Define a function",
+        },
+    ),
+    Newlines(
+        NewlinesData { "// Define a function\n", newline_count: 1 },
+    ),
+    SExpr(
+        ListData {
+            span: "(define (some_fun a b)\n  (+ 1 2))",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "define",
+                        annotations: [],
+                        value: "define",
+                    },
+                ),
+                SExpr(
+                    ListData {
+                        span: "(some_fun a b)",
+                        annotations: [],
+                        items: [
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "some_fun",
+                                    annotations: [],
+                                    value: "some_fun",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "a",
+                                    annotations: [],
+                                    value: "a",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "b",
+                                    annotations: [],
+                                    value: "b",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                Newlines(
+                    NewlinesData { "\n  ", newline_count: 1 },
+                ),
+                SExpr(
+                    ListData {
+                        span: "(+ 1 2)",
+                        annotations: [],
+                        items: [
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "+",
+                                    annotations: [],
+                                    value: "+",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Integer,
+                                    span: "1",
+                                    annotations: [],
+                                    value: "1",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Integer,
+                                    span: "2",
+                                    annotations: [],
+                                    value: "2",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    SExpr(
+        ListData {
+            span: "(define (\n         some_fun // Comment o..." (truncated),
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "define",
+                        annotations: [],
+                        value: "define",
+                    },
+                ),
+                SExpr(
+                    ListData {
+                        span: "(\n         some_fun // Comment on functi..." (truncated),
+                        annotations: [],
+                        items: [
+                            Newlines(
+                                NewlinesData { "\n         ", newline_count: 1 },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "some_fun",
+                                    annotations: [],
+                                    value: "some_fun",
+                                },
+                            ),
+                            CommentLine(
+                                NonAnnotatedStringData {
+                                    span: "// Comment on function\n",
+                                    value: "// Comment on function",
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "// Comment on function\n", newline_count: 1 },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "a",
+                                    annotations: [],
+                                    value: "a",
+                                },
+                            ),
+                            CommentLine(
+                                NonAnnotatedStringData {
+                                    span: "// Comment on arg a\n",
+                                    value: "// Comment on arg a",
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "// Comment on arg a\n", newline_count: 1 },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "b",
+                                    annotations: [],
+                                    value: "b",
+                                },
+                            ),
+                            CommentBlock(
+                                NonAnnotatedStringListData {
+                                    span: "/* Comment on arg b */",
+                                    value: [
+                                        "Comment on arg b",
+                                    ],
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "\n         ", newline_count: 1 },
+                            ),
+                        ],
+                    },
+                ),
+                Newlines(
+                    NewlinesData { "\n  ", newline_count: 1 },
+                ),
+                SExpr(
+                    ListData {
+                        span: "(+ 1 2)",
+                        annotations: [],
+                        items: [
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "+",
+                                    annotations: [],
+                                    value: "+",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Integer,
+                                    span: "1",
+                                    annotations: [],
+                                    value: "1",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Integer,
+                                    span: "2",
+                                    annotations: [],
+                                    value: "2",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    SExpr(
+        ListData {
+            span: "(define SOME_STRUCT {\n   a: \"a\",\n   b: '..." (truncated),
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "define",
+                        annotations: [],
+                        value: "define",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "SOME_STRUCT",
+                        annotations: [],
+                        value: "SOME_STRUCT",
+                    },
+                ),
+                Struct(
+                    ListData {
+                        span: "{\n   a: \"a\",\n   b: '''b''',\n   c: {\n    ..." (truncated),
+                        annotations: [],
+                        items: [
+                            Newlines(
+                                NewlinesData { "\n   ", newline_count: 1 },
+                            ),
+                            StructKey(
+                                NonAnnotatedStringData {
+                                    span: "a",
+                                    value: "a",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: QuotedString,
+                                    span: "\"a\"",
+                                    annotations: [],
+                                    value: "a",
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "\n   ", newline_count: 1 },
+                            ),
+                            StructKey(
+                                NonAnnotatedStringData {
+                                    span: "b",
+                                    value: "b",
+                                },
+                            ),
+                            MultilineString(
+                                MultilineStringData {
+                                    span: "'''b'''",
+                                    annotations: [],
+                                    value: "b",
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "\n   ", newline_count: 1 },
+                            ),
+                            StructKey(
+                                NonAnnotatedStringData {
+                                    span: "c",
+                                    value: "c",
+                                },
+                            ),
+                            Struct(
+                                ListData {
+                                    span: "{\n      'foo bar': (+ 3 4),\n      baz: 3..." (truncated),
+                                    annotations: [],
+                                    items: [
+                                        Newlines(
+                                            NewlinesData { "\n      ", newline_count: 1 },
+                                        ),
+                                        StructKey(
+                                            NonAnnotatedStringData {
+                                                span: "'foo bar'",
+                                                value: "\'foo bar\'",
+                                            },
+                                        ),
+                                        SExpr(
+                                            ListData {
+                                                span: "(+ 3 4)",
+                                                annotations: [],
+                                                items: [
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Symbol,
+                                                            span: "+",
+                                                            annotations: [],
+                                                            value: "+",
+                                                        },
+                                                    ),
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Integer,
+                                                            span: "3",
+                                                            annotations: [],
+                                                            value: "3",
+                                                        },
+                                                    ),
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Integer,
+                                                            span: "4",
+                                                            annotations: [],
+                                                            value: "4",
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Newlines(
+                                            NewlinesData { "\n      ", newline_count: 1 },
+                                        ),
+                                        StructKey(
+                                            NonAnnotatedStringData {
+                                                span: "baz",
+                                                value: "baz",
+                                            },
+                                        ),
+                                        Atomic(
+                                            AtomicData {
+                                                typ: Integer,
+                                                span: "3",
+                                                annotations: [],
+                                                value: "3",
+                                            },
+                                        ),
+                                        Newlines(
+                                            NewlinesData { "\n      ", newline_count: 1 },
+                                        ),
+                                        StructKey(
+                                            NonAnnotatedStringData {
+                                                span: "biz",
+                                                value: "biz",
+                                            },
+                                        ),
+                                        List(
+                                            ListData {
+                                                span: "[1, 2]",
+                                                annotations: [],
+                                                items: [
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Integer,
+                                                            span: "1",
+                                                            annotations: [],
+                                                            value: "1",
+                                                        },
+                                                    ),
+                                                    Atomic(
+                                                        AtomicData {
+                                                            typ: Integer,
+                                                            span: "2",
+                                                            annotations: [],
+                                                            value: "2",
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        Newlines(
+                                            NewlinesData { "\n      ", newline_count: 1 },
+                                        ),
+                                        StructKey(
+                                            NonAnnotatedStringData {
+                                                span: "ts",
+                                                value: "ts",
+                                            },
+                                        ),
+                                        Atomic(
+                                            AtomicData {
+                                                typ: Timestamp,
+                                                span: "2020-11-20T15:49:00.100Z",
+                                                annotations: [],
+                                                value: "2020-11-20T15:49:00.100Z",
+                                            },
+                                        ),
+                                        Newlines(
+                                            NewlinesData { "\n   ", newline_count: 1 },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            Newlines(
+                                NewlinesData { "\n", newline_count: 1 },
+                            ),
+                        ],
+                    },
+                ),
+            ],
+        },
+    ),
+]

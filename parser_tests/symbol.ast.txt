@@ -1,0 +1,87 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Symbol,
+            span: "foo",
+            annotations: [],
+            value: "foo",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Symbol,
+            span: "baz",
+            annotations: [],
+            value: "baz",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Symbol,
+            span: "+-",
+            annotations: [],
+            value: "+-",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Symbol,
+            span: "null_safe_thing",
+            annotations: [],
+            value: "null_safe_thing",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Symbol,
+            span: "nullish",
+            annotations: [],
+            value: "nullish",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Symbol,
+            span: "null5",
+            annotations: [],
+            value: "null5",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null",
+            annotations: [],
+            value: "null",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.null",
+            annotations: [],
+            value: "null.null",
+        },
+    ),
+]

@@ -3,17 +3,17 @@
 mod fixup;
 mod formatter;
 
+use crate::ast::Expr;
 use crate::config::FusionConfig;
 use crate::format::formatter::Formatter;
-use crate::ist::IntermediateSyntaxTree;
 
-/// Formats the given IST into a String using the provided FusionConfig
-pub fn format(fusion_config: &FusionConfig, ist: &IntermediateSyntaxTree) -> String {
+/// Formats the given AST into a String using the provided FusionConfig
+pub fn format(fusion_config: &FusionConfig, ast: &Vec<Expr>) -> String {
     let mut formatter = Formatter::new(fusion_config);
     if fusion_config.newline_fix_up_mode() {
-        formatter.format(&fixup::fixup_ist(ist).expressions);
+        formatter.format(&fixup::fixup_ast(ast));
     } else {
-        formatter.format(&ist.expressions);
+        formatter.format(ast);
     }
     formatter.finish()
 }
@@ -36,7 +36,7 @@ mod tests {
             let file = FusionFileContent::new("test".into(), input.into())
                 .parse($config)
                 .unwrap_or_else(|error| panic!("Error: {}", error));
-            let actual_output = format($config, &file.ist).trim().to_string();
+            let actual_output = format($config, &file.ast).trim().to_string();
             if expected_output != &actual_output {
                 let msg = format!(
                     "\nProcessing of {} didn't match expected output in {}:\n{}\n",

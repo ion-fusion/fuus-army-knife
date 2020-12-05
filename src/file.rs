@@ -2,7 +2,6 @@
 use crate::ast::Expr;
 use crate::config::FusionConfig;
 use crate::error::Error;
-use crate::ist::IntermediateSyntaxTree;
 use crate::parser;
 use regex::{Captures, Regex};
 use std::fs::read_to_string;
@@ -13,7 +12,6 @@ pub struct FusionFile {
     pub file_name: PathBuf,
     pub contents: String,
     pub ast: Vec<Expr>,
-    pub ist: IntermediateSyntaxTree,
 }
 
 impl FusionFile {
@@ -52,21 +50,6 @@ impl FusionFile {
     pub fn debug_ast(&self) -> String {
         let debug_view = format!("{:#?}", self.ast);
         replace_spans(&self.contents, &debug_view)
-    }
-
-    pub fn debug_ist(&self) -> String {
-        let debug_view = format!("{:#?}", self.ist.expressions);
-        replace_spans(&self.contents, &debug_view)
-    }
-
-    #[cfg(test)]
-    pub fn test_file_with_ast(contents: &str, ast: Vec<Expr>) -> FusionFile {
-        FusionFile {
-            file_name: "test".into(),
-            contents: contents.into(),
-            ast,
-            ist: IntermediateSyntaxTree::new(Vec::new()),
-        }
     }
 }
 
@@ -118,13 +101,6 @@ impl FusionFileContent {
             parser::parse(&self.file_name, &self.contents, &fusion_config).map_err(|error| {
                 Error::Generic(format!("Failed to parse {:?}: {}", self.file_name, error))
             })?;
-        let ist = IntermediateSyntaxTree::from_ast(&ast).map_err(|error| {
-            Error::Generic(format!(
-                "Failed to translate AST to IST for {:?}: {}",
-                self.file_name, error
-            ))
-        })?;
-
-        Ok(FusionFile::new(self.file_name, self.contents, ast, ist))
+        Ok(FusionFile::new(self.file_name, self.contents, ast))
     }
 }

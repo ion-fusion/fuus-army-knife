@@ -1,0 +1,175 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.timestamp",
+            annotations: [],
+            value: "null.timestamp",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T12:14Z",
+            annotations: [],
+            value: "2007-02-23T12:14Z",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T12:14:33.079-08:00",
+            annotations: [],
+            value: "2007-02-23T12:14:33.079-08:00",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T20:14:33.079Z",
+            annotations: [],
+            value: "2007-02-23T20:14:33.079Z",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T20:14:33.079+00:00",
+            annotations: [],
+            value: "2007-02-23T20:14:33.079+00:00",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T20:14:33.079-00:00",
+            annotations: [],
+            value: "2007-02-23T20:14:33.079-00:00",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-01-01T00:00-00:00",
+            annotations: [],
+            value: "2007-01-01T00:00-00:00",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-01-01",
+            annotations: [],
+            value: "2007-01-01",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-01-01T",
+            annotations: [],
+            value: "2007-01-01T",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-01T",
+            annotations: [],
+            value: "2007-01T",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007T",
+            annotations: [],
+            value: "2007T",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23",
+            annotations: [],
+            value: "2007-02-23",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T00:00Z",
+            annotations: [],
+            value: "2007-02-23T00:00Z",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T00:00+00:00",
+            annotations: [],
+            value: "2007-02-23T00:00+00:00",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Timestamp,
+            span: "2007-02-23T00:00:00-00:00",
+            annotations: [],
+            value: "2007-02-23T00:00:00-00:00",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "2007",
+            annotations: [],
+            value: "2007",
+        },
+    ),
+]

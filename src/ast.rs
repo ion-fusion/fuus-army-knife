@@ -1,137 +1,318 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 use crate::span::ShortSpan;
+use crate::string_util::count_newlines;
+use std::fmt;
 
-#[derive(new, Debug)]
-pub struct NonAnnotatedValue {
+pub trait CountNewlines {
+    fn count_newlines(&self) -> usize;
+}
+
+pub trait CountItemsBeforeNewline {
+    fn count_items_before_newline(&self) -> usize;
+}
+
+pub trait CountUntilPred<P, U>
+where
+    P: Fn(&Expr) -> bool,
+    U: Fn(&Expr) -> bool,
+{
+    fn count_until(&self, pred: P, until: U) -> usize;
+}
+
+#[derive(new, Clone, Debug)]
+pub struct NonAnnotatedStringData {
     pub span: ShortSpan,
     pub value: String,
 }
 
-#[derive(Debug)]
-pub struct NonAnnotatedValues {
+#[derive(new, Clone, Debug)]
+pub struct NonAnnotatedStringListData {
     pub span: ShortSpan,
-    pub values: Vec<String>,
-}
-impl NonAnnotatedValues {
-    pub fn new(span: ShortSpan, values: Vec<String>) -> NonAnnotatedValues {
-        NonAnnotatedValues { span, values }
-    }
-}
-
-#[derive(Debug)]
-pub struct ValueNode {
-    pub span: ShortSpan,
-    pub annotations: Vec<String>,
-    pub value: String,
-}
-impl ValueNode {
-    pub fn new(span: ShortSpan, value: String) -> ValueNode {
-        ValueNode {
-            span,
-            annotations: Vec::new(),
-            value,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct ValuesNode {
-    pub span: ShortSpan,
-    pub annotations: Vec<String>,
     pub value: Vec<String>,
 }
 
-#[derive(Debug)]
-pub struct ExpressionsNode {
+#[derive(new, Clone, Debug)]
+pub struct MultilineStringData {
     pub span: ShortSpan,
     pub annotations: Vec<String>,
-    pub value: Vec<Expr>,
+    pub value: String,
 }
-impl ExpressionsNode {
-    pub fn new(span: ShortSpan, value: Vec<Expr>) -> ExpressionsNode {
-        ExpressionsNode {
-            span,
-            annotations: Vec::new(),
-            value,
+
+impl CountNewlines for MultilineStringData {
+    fn count_newlines(&self) -> usize {
+        count_newlines(&self.value)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ClobExpr {
+    MultilineString(MultilineStringData),
+    QuotedString(AtomicData),
+    Newlines(NewlinesData),
+}
+
+impl ClobExpr {
+    pub fn is_newlines(&self) -> bool {
+        match *self {
+            ClobExpr::Newlines(_) => true,
+            _ => false,
         }
     }
 }
 
-#[derive(new, Debug)]
-pub struct NewlinesNode {
-    pub span: ShortSpan,
-    pub newlines: u16,
+impl CountItemsBeforeNewline for &[ClobExpr] {
+    fn count_items_before_newline(&self) -> usize {
+        let mut count = 0;
+        for expr in *self {
+            match expr {
+                ClobExpr::Newlines(_) => return count,
+                _ => {
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
 }
 
-#[derive(new, Debug)]
-pub struct StructMemberNode {
+#[derive(new, Clone, Debug)]
+pub struct ClobData {
     pub span: ShortSpan,
-    // Includes the key, comments, newlines, and the member itself
-    pub value: Vec<Expr>,
+    pub annotations: Vec<String>,
+    pub clobs: Vec<ClobExpr>,
+}
+impl CountNewlines for ClobData {
+    fn count_newlines(&self) -> usize {
+        let mut total = 0;
+        for expr in &self.clobs {
+            total += match *expr {
+                ClobExpr::MultilineString(ref data) => data.value.len(),
+                ClobExpr::QuotedString(_) => 0,
+                ClobExpr::Newlines(ref data) => data.newline_count as usize,
+            }
+        }
+        total
+    }
 }
 
-#[derive(Debug)]
+#[derive(new, Clone, Debug)]
+pub struct ListData {
+    pub span: ShortSpan,
+    pub annotations: Vec<String>,
+    pub items: Vec<Expr>,
+}
+impl ListData {
+    pub fn count_newlines(&self) -> usize {
+        self.items.iter().map(|expr| expr.count_newlines()).sum()
+    }
+}
+
+#[derive(new, Clone, Copy)]
+pub struct NewlinesData {
+    pub span: ShortSpan,
+    pub newline_count: u16,
+}
+impl fmt::Debug for NewlinesData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "NewlinesData {{ {:#?}, newline_count: {} }}",
+            self.span, self.newline_count
+        )
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum AtomicType {
+    Blob,
+    Boolean,
+    Integer,
+    Null,
+    QuotedString,
+    Real,
+    Symbol,
+    Timestamp,
+}
+
+#[derive(new, Clone, Debug)]
+pub struct AtomicData {
+    pub typ: AtomicType,
+    pub span: ShortSpan,
+    pub annotations: Vec<String>,
+    pub value: String,
+}
+
+#[derive(Clone, Debug)]
 pub enum Expr {
-    Blob(ValueNode),
-    Boolean(ValueNode),
-    Clob(ExpressionsNode),
-    CommentBlock(NonAnnotatedValues),
-    CommentLine(NonAnnotatedValue),
-    Integer(ValueNode),
-    List(ExpressionsNode),
-    MultilineString(ValueNode),
-    Newlines(NewlinesNode),
-    Null(ValueNode),
-    QuotedString(ValueNode),
-    Real(ValueNode),
-    SExpr(ExpressionsNode),
-    Struct(ExpressionsNode),
-    StructKey(ValueNode),
-    StructMember(StructMemberNode),
-    Symbol(ValueNode),
-    Timestamp(ValueNode),
+    Atomic(AtomicData),
+    Clob(ClobData),
+    CommentBlock(NonAnnotatedStringListData),
+    CommentLine(NonAnnotatedStringData),
+    List(ListData),
+    MultilineString(MultilineStringData),
+    Newlines(NewlinesData),
+    SExpr(ListData),
+    Struct(ListData),
+    StructKey(NonAnnotatedStringData),
 }
 impl Expr {
+    pub fn is_newlines(&self) -> bool {
+        match *self {
+            Expr::Newlines(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_comment(&self) -> bool {
+        match *self {
+            Expr::CommentBlock(_) => true,
+            Expr::CommentLine(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_comment_line(&self) -> bool {
+        match *self {
+            Expr::CommentLine(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_list(&self) -> bool {
+        match self {
+            Expr::List(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_struct(&self) -> bool {
+        match *self {
+            Expr::Struct(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_struct_key(&self) -> bool {
+        match self {
+            Expr::StructKey(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_sexpr(&self) -> bool {
+        match self {
+            Expr::SExpr(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn list_data<'a>(&'a self) -> &'a ListData {
+        match self {
+            Expr::List(data) => data,
+            Expr::SExpr(data) => data,
+            Expr::Struct(data) => data,
+            _ => panic!("called list_data on a non-list"),
+        }
+    }
+
+    pub fn is_not_comment_or_newlines(&self) -> bool {
+        !self.is_newlines() && !self.is_comment()
+    }
+
+    pub fn is_value(&self) -> bool {
+        !self.is_newlines() && !self.is_comment() && !self.is_struct_key()
+    }
+
+    pub fn is_symbol(&self) -> bool {
+        match *self {
+            Expr::Atomic(ref atomic) => match atomic.typ {
+                AtomicType::Symbol => true,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
+    pub fn symbol_value<'a>(&'a self) -> &'a String {
+        match *self {
+            Expr::Atomic(ref atomic) => match atomic.typ {
+                AtomicType::Symbol => &atomic.value,
+                _ => panic!(),
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn span(&self) -> ShortSpan {
+        match self {
+            Expr::Atomic(data) => data.span,
+            Expr::Clob(data) => data.span,
+            Expr::CommentBlock(data) => data.span,
+            Expr::CommentLine(data) => data.span,
+            Expr::List(data) => data.span,
+            Expr::MultilineString(data) => data.span,
+            Expr::Newlines(data) => data.span,
+            Expr::SExpr(data) => data.span,
+            Expr::Struct(data) => data.span,
+            Expr::StructKey(data) => data.span,
+        }
+    }
+
     pub fn attach_annotations(mut self: Expr, annotations: Vec<String>) -> Expr {
         match &mut self {
-            Expr::Blob(ref mut value) => value.annotations = annotations,
-            Expr::Boolean(ref mut value) => value.annotations = annotations,
-            Expr::Clob(ref mut value) => value.annotations = annotations,
-            Expr::Integer(ref mut value) => value.annotations = annotations,
-            Expr::List(ref mut value) => value.annotations = annotations,
-            Expr::MultilineString(ref mut value) => value.annotations = annotations,
-            Expr::Null(ref mut value) => value.annotations = annotations,
-            Expr::QuotedString(ref mut value) => value.annotations = annotations,
-            Expr::Real(ref mut value) => value.annotations = annotations,
-            Expr::SExpr(ref mut value) => value.annotations = annotations,
-            Expr::Struct(ref mut value) => value.annotations = annotations,
-            Expr::Symbol(ref mut value) => value.annotations = annotations,
-            Expr::Timestamp(ref mut value) => value.annotations = annotations,
+            Expr::Atomic(ref mut data) => data.annotations = annotations,
+            Expr::Clob(ref mut data) => data.annotations = annotations,
+            Expr::List(ref mut data) => data.annotations = annotations,
+            Expr::MultilineString(ref mut data) => data.annotations = annotations,
+            Expr::SExpr(ref mut data) => data.annotations = annotations,
+            Expr::Struct(ref mut data) => data.annotations = annotations,
             _ => unreachable!(),
         }
         self
     }
-
-    pub fn span(&self) -> ShortSpan {
+}
+impl CountNewlines for &Expr {
+    fn count_newlines(&self) -> usize {
         match *self {
-            Expr::Blob(ref value) => value.span,
-            Expr::Boolean(ref value) => value.span,
-            Expr::Clob(ref value) => value.span,
-            Expr::CommentBlock(ref value) => value.span,
-            Expr::CommentLine(ref value) => value.span,
-            Expr::Integer(ref value) => value.span,
-            Expr::List(ref value) => value.span,
-            Expr::MultilineString(ref value) => value.span,
-            Expr::Newlines(ref value) => value.span,
-            Expr::Null(ref value) => value.span,
-            Expr::QuotedString(ref value) => value.span,
-            Expr::Real(ref value) => value.span,
-            Expr::SExpr(ref value) => value.span,
-            Expr::Struct(ref value) => value.span,
-            Expr::StructKey(ref value) => value.span,
-            Expr::StructMember(ref value) => value.span,
-            Expr::Symbol(ref value) => value.span,
-            Expr::Timestamp(ref value) => value.span,
+            Expr::Atomic(_) => 0,
+            Expr::Clob(ref data) => data.count_newlines(),
+            Expr::CommentBlock(ref data) => data.value.len(),
+            Expr::CommentLine(_) => 1,
+            Expr::List(ref data) => data.count_newlines(),
+            Expr::MultilineString(ref data) => data.count_newlines(),
+            Expr::Newlines(ref data) => data.newline_count as usize,
+            Expr::SExpr(ref data) => data.count_newlines(),
+            Expr::Struct(ref data) => data.count_newlines(),
+            Expr::StructKey(_) => 0,
         }
+    }
+}
+
+impl CountNewlines for &[Expr] {
+    fn count_newlines(&self) -> usize {
+        self.iter().map(|expr| expr.count_newlines()).sum()
+    }
+}
+impl<P, U> CountUntilPred<P, U> for &[Expr]
+where
+    P: Fn(&Expr) -> bool,
+    U: Fn(&Expr) -> bool,
+{
+    fn count_until(&self, pred: P, until: U) -> usize {
+        let mut count = 0;
+        for expr in *self {
+            if pred(expr) {
+                count += 1;
+            } else if until(expr) {
+                return count;
+            }
+        }
+        count
+    }
+}
+
+impl CountItemsBeforeNewline for &[Expr] {
+    fn count_items_before_newline(&self) -> usize {
+        self.count_until(|e| e.is_not_comment_or_newlines(), |e| e.is_newlines())
     }
 }

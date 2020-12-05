@@ -1,0 +1,32 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Blob,
+            span: "{{ ZnV1c2Fr }}",
+            annotations: [],
+            value: "ZnV1c2Fr",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Blob,
+            span: "{{ ZnV1c2FrIGRvZXMgc3R1ZmY= }}",
+            annotations: [],
+            value: "ZnV1c2FrIGRvZXMgc3R1ZmY=",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Blob,
+            span: "{{\n   YXNkZiBhc2RmIGFzZGZmZg==\n}}",
+            annotations: [],
+            value: "YXNkZiBhc2RmIGFzZGZmZg==",
+        },
+    ),
+]

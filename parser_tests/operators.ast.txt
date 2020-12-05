@@ -1,0 +1,187 @@
+[
+    SExpr(
+        ListData {
+            span: "(|| 1)",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "||",
+                        annotations: [],
+                        value: "||",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Integer,
+                        span: "1",
+                        annotations: [],
+                        value: "1",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    SExpr(
+        ListData {
+            span: "(|a| a)",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "|",
+                        annotations: [],
+                        value: "|",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "a",
+                        annotations: [],
+                        value: "a",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "|",
+                        annotations: [],
+                        value: "|",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "a",
+                        annotations: [],
+                        value: "a",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    SExpr(
+        ListData {
+            span: "(| a | a)",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "|",
+                        annotations: [],
+                        value: "|",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "a",
+                        annotations: [],
+                        value: "a",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "|",
+                        annotations: [],
+                        value: "|",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "a",
+                        annotations: [],
+                        value: "a",
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    SExpr(
+        ListData {
+            span: "(|a b| (+ a b))",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "|",
+                        annotations: [],
+                        value: "|",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "a",
+                        annotations: [],
+                        value: "a",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "b",
+                        annotations: [],
+                        value: "b",
+                    },
+                ),
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "|",
+                        annotations: [],
+                        value: "|",
+                    },
+                ),
+                SExpr(
+                    ListData {
+                        span: "(+ a b)",
+                        annotations: [],
+                        items: [
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "+",
+                                    annotations: [],
+                                    value: "+",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "a",
+                                    annotations: [],
+                                    value: "a",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "b",
+                                    annotations: [],
+                                    value: "b",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            ],
+        },
+    ),
+]

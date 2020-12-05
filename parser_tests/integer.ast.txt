@@ -1,0 +1,109 @@
+[
+    Atomic(
+        AtomicData {
+            typ: Null,
+            span: "null.int",
+            annotations: [],
+            value: "null.int",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "0",
+            annotations: [],
+            value: "0",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "-0",
+            annotations: [],
+            value: "-0",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "123",
+            annotations: [],
+            value: "123",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "-123",
+            annotations: [],
+            value: "-123",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "0xBeef",
+            annotations: [],
+            value: "0xBeef",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "0b0101",
+            annotations: [],
+            value: "0b0101",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "1_2_3",
+            annotations: [],
+            value: "1_2_3",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "0xFA_CE",
+            annotations: [],
+            value: "0xFA_CE",
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
+    ),
+    Atomic(
+        AtomicData {
+            typ: Integer,
+            span: "0b10_10_10",
+            annotations: [],
+            value: "0b10_10_10",
+        },
+    ),
+]
