@@ -6,6 +6,9 @@ extern crate derive_new;
 #[macro_use]
 extern crate serde_derive;
 
+#[macro_use]
+mod error_macro;
+
 mod ast;
 mod config;
 mod diff_util;
@@ -23,21 +26,12 @@ use clap::{crate_version, App, Arg, SubCommand};
 use std::io::Write;
 use tempfile::NamedTempFile;
 
-macro_rules! fail {
-    ($($arg:expr),*) => {
-        {
-            eprintln!($($arg,)*);
-            ::std::process::exit(1);
-        }
-    };
-}
-
 fn main() {
     let mut clap_app = configure_clap_app();
     let matches = clap_app.clone().get_matches();
 
     let config_file_name = matches.value_of("config").unwrap_or_else(|| "fuusak.toml");
-    let fusion_config = load_config(config_file_name).unwrap_or_else(|error| fail!("{}", error));
+    let fusion_config = load_config(config_file_name).unwrap_or_else(|error| bail!("{}", error));
 
     if let Some(matches) = matches.subcommand_matches("debug-parser") {
         let path = matches.value_of("FILE").unwrap();
@@ -94,15 +88,15 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
 }
 
 fn subcommand_debug_parser(fusion_config: &FusionConfig, path: &str) {
-    let file_contents = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+    let file_contents = FusionFileContent::load(path).unwrap_or_else(|err| bail!("{}", err));
     let file = file_contents
         .parse(fusion_config)
-        .unwrap_or_else(|err| fail!("{}", err));
+        .unwrap_or_else(|err| bail!("{}", err));
     println!("{}", file.debug_ast());
 }
 
 fn subcommand_create_config() {
-    write_default_config().unwrap_or_else(|err| fail!("Failed to write default config: {}", err));
+    write_default_config().unwrap_or_else(|err| bail!("Failed to write default config: {}", err));
 }
 
 fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) {
@@ -110,16 +104,16 @@ fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) 
 
     // Write formatted to a temp file
     let mut temp_file: NamedTempFile =
-        NamedTempFile::new().unwrap_or_else(|err| fail!("Failed to create temp file: {}", err));
+        NamedTempFile::new().unwrap_or_else(|err| bail!("Failed to create temp file: {}", err));
     write!(temp_file, "{}", formatted)
-        .unwrap_or_else(|err| fail!("Failed to write to temp file: {}", err));
+        .unwrap_or_else(|err| bail!("Failed to write to temp file: {}", err));
 
     // Replace original file with temp file via rename
     temp_file
         .into_temp_path()
         .persist(&fusion_file.file_name)
         .unwrap_or_else(|err| {
-            fail!(
+            bail!(
                 "Failed to overwrite {:?} with formatted output: {}",
                 fusion_file.file_name,
                 err
@@ -128,16 +122,16 @@ fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) 
 }
 
 fn subcommand_format(fusion_config: &FusionConfig, path: &str) {
-    let file_content = FusionFileContent::load(path).unwrap_or_else(|err| fail!("{}", err));
+    let file_content = FusionFileContent::load(path).unwrap_or_else(|err| bail!("{}", err));
     let file = file_content
         .parse(fusion_config)
-        .unwrap_or_else(|err| fail!("{}", err));
+        .unwrap_or_else(|err| bail!("{}", err));
     format_file_in_place(fusion_config, &file);
 }
 
 fn subcommand_format_all(fusion_config: &FusionConfig) {
     let fusion_files = FusionFile::recursively_load_directory(fusion_config, "./")
-        .unwrap_or_else(|err| fail!("{}", err));
+        .unwrap_or_else(|err| bail!("{}", err));
     for file in &fusion_files {
         println!("Formatting {:?}...", file.file_name);
         format_file_in_place(fusion_config, file);
@@ -146,7 +140,7 @@ fn subcommand_format_all(fusion_config: &FusionConfig) {
 
 fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
     let fusion_files = FusionFile::recursively_load_directory(fusion_config, "./")
-        .unwrap_or_else(|err| fail!("{}", err));
+        .unwrap_or_else(|err| bail!("{}", err));
     let mut passed = true;
     for file in &fusion_files {
         println!("Checking {:?}...", file.file_name);
@@ -163,7 +157,7 @@ fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
         }
     }
     if !passed {
-        fail!("Checkstyle failed.")
+        bail!("Checkstyle failed.")
     } else {
         println!("All files adhere to correct style.")
     }
