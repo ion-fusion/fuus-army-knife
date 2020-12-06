@@ -18,7 +18,7 @@ pub fn parse<'i, P: AsRef<Path>>(
     // FusionParser::parse converts the string into a token stream using the grammar in grammar.pest.
     // The visit_pairs method then converts that token stream into the AST.
     let parse_result = FusionLexer::parse(Rule::file, source)
-        .map_err(|error| Error::Generic(format!("{}{}", file_name.as_ref().display(), error)));
+        .map_err(|error| err_generic!("{}{}", file_name.as_ref().display(), error));
     visit_pairs(parse_result?.next().unwrap().into_inner(), config)
 }
 

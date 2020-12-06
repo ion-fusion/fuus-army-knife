@@ -105,6 +105,12 @@ impl ListData {
     pub fn count_newlines(&self) -> usize {
         self.items.iter().map(|expr| expr.count_newlines()).sum()
     }
+
+    pub fn item_iter<'a>(&'a self) -> impl Iterator<Item = &'a Expr> {
+        self.items
+            .iter()
+            .filter(|expr| (*expr).is_not_comment_or_newlines())
+    }
 }
 
 #[derive(new, Clone, Copy)]
@@ -122,7 +128,7 @@ impl fmt::Debug for NewlinesData {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum AtomicType {
     Blob,
     Boolean,
@@ -233,13 +239,23 @@ impl Expr {
         }
     }
 
-    pub fn symbol_value<'a>(&'a self) -> &'a String {
+    pub fn stripped_symbol_value<'a>(&'a self) -> Option<&'a str> {
+        self.symbol_value().map(|val| {
+            if val.starts_with("'") && val.ends_with("'") {
+                &val[1..(val.len() - 1)]
+            } else {
+                val
+            }
+        })
+    }
+
+    pub fn symbol_value<'a>(&'a self) -> Option<&'a String> {
         match *self {
             Expr::Atomic(ref atomic) => match atomic.typ {
-                AtomicType::Symbol => &atomic.value,
-                _ => panic!(),
+                AtomicType::Symbol => Some(&atomic.value),
+                _ => None,
             },
-            _ => panic!(),
+            _ => None,
         }
     }
 
@@ -269,6 +285,17 @@ impl Expr {
             _ => unreachable!(),
         }
         self
+    }
+
+    pub fn string_value<'a>(&'a self) -> Option<&'a String> {
+        match self {
+            Expr::Atomic(data) => match data.typ {
+                AtomicType::QuotedString => Some(&data.value),
+                _ => None,
+            },
+            Expr::MultilineString(data) => Some(&data.value),
+            _ => None,
+        }
     }
 }
 impl CountNewlines for &Expr {

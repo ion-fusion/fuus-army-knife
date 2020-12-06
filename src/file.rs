@@ -7,7 +7,7 @@ use regex::{Captures, Regex};
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
-#[derive(new)]
+#[derive(new, Debug)]
 pub struct FusionFile {
     pub file_name: PathBuf,
     pub contents: String,
@@ -15,6 +15,21 @@ pub struct FusionFile {
 }
 
 impl FusionFile {
+    pub fn empty_file() -> FusionFile {
+        FusionFile {
+            file_name: PathBuf::from("empty"),
+            contents: "".into(),
+            ast: Vec::new(),
+        }
+    }
+
+    pub fn load<P: AsRef<Path>>(
+        fusion_config: &FusionConfig,
+        path: P,
+    ) -> Result<FusionFile, Error> {
+        FusionFileContent::load(path)?.parse(fusion_config)
+    }
+
     pub fn recursively_load_directory<P: AsRef<Path>>(
         fusion_config: &FusionConfig,
         path: P,
@@ -25,8 +40,7 @@ impl FusionFile {
             .sort_by_file_path(|a, b| a.cmp(b))
             .build();
         for entry in directory_walker {
-            let entry = entry
-                .map_err(|err| Error::Generic(format!("Failed to read input file: {}", err)))?;
+            let entry = entry.map_err(|err| err_generic!("Failed to read input file: {}", err))?;
             let path = entry.path();
             let extension = path.extension().and_then(|extension| extension.to_str());
             if !entry
@@ -35,11 +49,11 @@ impl FusionFile {
                 .unwrap_or(true)
             {
                 if let Some("fusion") = extension {
-                    let contents = FusionFileContent::load(path)
-                        .map_err(|err| Error::Generic(format!("{}", err)))?;
+                    let contents =
+                        FusionFileContent::load(path).map_err(|err| err_generic!("{}", err))?;
                     let fusion_file = contents
                         .parse(fusion_config)
-                        .map_err(|err| Error::Generic(format!("{}", err)))?;
+                        .map_err(|err| err_generic!("{}", err))?;
                     fusion_files.push(fusion_file);
                 }
             }
@@ -87,20 +101,14 @@ impl FusionFileContent {
         Ok(FusionFileContent::new(
             path.as_ref().to_path_buf(),
             read_to_string(path.as_ref()).map_err(|err| {
-                Error::Generic(format!(
-                    "Failed to load file {}: {}",
-                    path.as_ref().display(),
-                    err
-                ))
+                err_generic!("Failed to load file {}: {}", path.as_ref().display(), err)
             })?,
         ))
     }
 
     pub fn parse(self, fusion_config: &FusionConfig) -> Result<FusionFile, Error> {
-        let ast =
-            parser::parse(&self.file_name, &self.contents, &fusion_config).map_err(|error| {
-                Error::Generic(format!("Failed to parse {:?}: {}", self.file_name, error))
-            })?;
+        let ast = parser::parse(&self.file_name, &self.contents, &fusion_config)
+            .map_err(|error| err_generic!("Failed to parse {:?}: {}", self.file_name, error))?;
         Ok(FusionFile::new(self.file_name, self.contents, ast))
     }
 }

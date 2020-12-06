@@ -153,7 +153,7 @@ impl<'i> Formatter<'i> {
     // Complicated logic for determining whitespace between s-expression members due to
     // the inconsistent formatting of `|` lambda argument lists
     fn bind_whitespace<'a>(&self, exprs: &'a [Expr]) -> Vec<(&'a Expr, bool)> {
-        let is_arg_symbol = |expr: &Expr| expr.is_symbol() && expr.symbol_value() == "|";
+        let is_arg_symbol = |expr: &Expr| expr.symbol_value().map(|v| v == "|").unwrap_or(false);
 
         let mut bound = Vec::new();
         let mut first_is_arg_list = false;
@@ -316,7 +316,7 @@ fn calculate_continuation_indent(
         // If the first value is a symbol, then try to
         // override determined indentation with config
         if first.is_symbol() {
-            let symbol_value = first.symbol_value();
+            let symbol_value = first.symbol_value().unwrap();
             if indent_type != IndentType::Fixed {
                 indent_type = IndentType::EndOfOpeningSymbol(next_indent + symbol_value.len() + 2);
             }
