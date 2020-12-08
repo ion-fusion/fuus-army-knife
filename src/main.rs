@@ -39,9 +39,7 @@ fn main() {
         subcommand_create_config();
     }
 
-    let config_file_name = app_matches
-        .value_of("config")
-        .unwrap_or_else(|| "fuusak.toml");
+    let config_file_name = app_matches.value_of("config");
     let fusion_config = load_config(config_file_name).unwrap_or_else(|error| bail!("{}", error));
 
     if let Some(matches) = app_matches.subcommand_matches("debug-parser") {
