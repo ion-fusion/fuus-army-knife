@@ -1,58 +1,85 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 use crate::ast::*;
-
-use crate::config::{FusionConfig, FusionPathMode};
+use crate::config::FusionConfig;
 use crate::error::Error;
-use crate::file::FusionFile;
-use crate::index::{Module, ModuleCell, ModuleRepoCell, Origin, RequireForm, RequireType};
+use crate::file::{find_files, FusionFile};
+use crate::index::{
+    FusionIndexCell, Module, ModuleCell, Origin, RequireForm, RequireType, Script, ScriptCell,
+};
 use crate::span::ShortSpan;
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-#[derive(new)]
-pub struct ModuleLoader<'i> {
-    fusion_config: &'i FusionConfig,
-    module_repo: ModuleRepoCell,
+pub struct FusionLoader<'i> {
+    config: &'i FusionConfig,
+    index: FusionIndexCell,
+    current_package_path: PathBuf,
 }
 
-impl<'i> ModuleLoader<'i> {
-    pub fn load_file<P: AsRef<Path>>(&self, file_path: P) -> Result<ModuleCell, Error> {
+impl<'i> FusionLoader<'i> {
+    pub fn new(config: &'i FusionConfig, fusion_index: FusionIndexCell) -> FusionLoader<'i> {
+        FusionLoader {
+            config,
+            index: fusion_index.clone(),
+            // Retain a copy of the current_package_path so that we can load modules while
+            // using it without running into runtime memory ownership issues.
+            current_package_path: fusion_index.borrow().current_package_path().into(),
+        }
+    }
+
+    pub fn load_configured_paths(&self, _config: &FusionConfig) -> Result<(), Error> {
+        // Load modules
+        let module_path = self.current_package_path.join("fusion/src");
+        if module_path.exists() {
+            let fusion_file_paths = find_files(module_path, ".fusion")?;
+            for file_path in &fusion_file_paths {
+                self.load_module_file(file_path)?;
+            }
+        }
+        // Load tests
+        let test_path = self.current_package_path.join("ftst");
+        if test_path.exists() {
+            let fusion_file_paths = find_files(test_path, ".fusion")?;
+            for file_path in &fusion_file_paths {
+                let relative_path = file_path.strip_prefix(&self.current_package_path).unwrap();
+                let test_name = relative_path.to_string_lossy();
+                self.load_script(
+                    test_name.to_string(),
+                    vec!["/fusion".into()],
+                    Vec::new(),
+                    vec![relative_path.to_path_buf()],
+                )?;
+                println!("Loaded test: {}", test_name);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn load_module_file<P: AsRef<Path>>(&self, file_path: P) -> Result<ModuleCell, Error> {
         let file_path = self.resolve_full_file_path(file_path.as_ref())?;
         let module_name = self.determine_module_name(&file_path)?;
-        if let Some(module) = self.module_repo.borrow().get_module(&module_name) {
+        if let Some(module) = self.index.borrow().get_module(&module_name) {
             return Ok(module);
         }
 
-        let file = FusionFile::load(self.fusion_config, &file_path)
+        let file = FusionFile::load(self.config, &file_path)
             .map_err(|err| err_generic!("failed to load {:?}: {}", file_path, err))?;
 
         let module = self.process_file(module_name, file)?;
-        if let Some(path_config) = self
-            .module_repo
-            .borrow()
-            .resolve_path_config(self.fusion_config, &file_path)
-        {
-            match path_config.mode {
-                FusionPathMode::Modules => {}
-                FusionPathMode::Tests => {
-                    self.load_module("/fusion")?;
-                }
-            }
-        }
-
-        self.module_repo.borrow_mut().put_module(module.clone());
+        self.index.borrow_mut().put_module(module.clone());
 
         println!("Loaded module: {}", module.borrow().name);
         Ok(module)
     }
 
-    fn load_module(&self, module_name: &str) -> Result<ModuleCell, Error> {
+    pub fn load_module(&self, module_name: &str) -> Result<ModuleCell, Error> {
         if module_name == "/fusion/private/kernel" {
-            return Ok(self.module_repo.borrow_mut().get_root_module());
+            return Ok(self.index.borrow_mut().get_root_module());
         }
 
         let module_file_name = self
-            .module_repo
+            .index
             .borrow()
             .find_module_file(module_name)
             .ok_or_else(|| {
@@ -61,19 +88,56 @@ impl<'i> ModuleLoader<'i> {
                     module_name
                 )
             })?;
-        self.load_file(module_file_name)
+        self.load_module_file(module_file_name)
     }
 
-    fn resolve_full_file_path(&self, file_path: &Path) -> Result<PathBuf, Error> {
-        Ok(if file_path.is_relative() {
-            current_dir()?.join(file_path)
-        } else {
-            file_path.into()
+    pub fn load_script(
+        &self,
+        name: String,
+        top_level_modules: Vec<String>,
+        global_bindings: Vec<String>,
+        file_names: Vec<PathBuf>,
+    ) -> Result<ScriptCell, Error> {
+        for top_level in &top_level_modules {
+            self.load_module(top_level)?;
+        }
+
+        let files = file_names
+            .into_iter()
+            .map(|file_name| {
+                self.resolve_full_file_path(&file_name)
+                    .and_then(|file_path| FusionFile::load(self.config, file_path))
+                    .map(|mut file| {
+                        // Go back to the "relative to Config" file name for tests
+                        file.file_name = file_name;
+                        file
+                    })
+            })
+            .collect::<Result<Vec<FusionFile>, Error>>()?;
+
+        for file in &files {
+            let mut processed = ProcessedFile::new();
+            for expr in &file.ast {
+                self.visit_expr(&mut processed, expr, false)
+                    .map_err(&|err: Error| err.resolve_spanned(&file.file_name, &file.contents))?;
+            }
+            drop(processed);
+        }
+
+        let script = Script::new(name, top_level_modules, global_bindings, files);
+        self.index.borrow_mut().put_script(script.clone());
+        Ok(script)
+    }
+
+    fn resolve_full_file_path<'a>(&self, file_path: &'a Path) -> Result<Cow<'a, Path>, Error> {
+        Ok(match file_path.is_relative() {
+            true => Cow::Owned(self.current_package_path.join(file_path)),
+            _ => Cow::Borrowed(file_path),
         })
     }
 
     fn determine_module_name(&self, file_path: &Path) -> Result<String, Error> {
-        let module_repo = self.module_repo.borrow();
+        let module_repo = self.index.borrow();
         let parent_path = module_repo
             .find_parent_path(&file_path)
             .ok_or_else(|| err_generic!("failed to find parent path of {:?}", file_path))?;
@@ -239,10 +303,7 @@ impl<'i> ModuleLoader<'i> {
                         first_value.span(),
                         "support for `(require (prefix_in ...))` is not implemented"
                     )),
-                    "rename_in" => Err(err_spanned!(
-                        first_value.span(),
-                        "support for `(require (rename_in ...))` is not implemented"
-                    )),
+                    "rename_in" => self.visit_require_rename_in(processed, sexpr.span, items),
                     _ => Err(err_spanned!(
                         first_value.span(),
                         "invalid argument to require"
@@ -278,6 +339,49 @@ impl<'i> ModuleLoader<'i> {
                     name.map(|value| Origin::new(value, expr.span()))
                 })
                 .collect::<Result<Vec<Origin>, Error>>()?
+                .into_iter()
+                .collect(),
+            ),
+        ));
+        Ok(())
+    }
+
+    fn visit_require_rename_in(
+        &self,
+        processed: &mut ProcessedFile,
+        span: ShortSpan,
+        mut rest: impl Iterator<Item = &'i Expr>,
+    ) -> Result<(), Error> {
+        let module_name = rest
+            .next()
+            .map(|expr| expr.string_value())
+            .flatten()
+            .ok_or_else(|| err_spanned!(span, "missing module name"))?;
+        let module = self.load_module(module_name)?;
+        processed.requires.push(RequireForm::new(
+            module,
+            RequireType::Mapped(
+                rest.map(|expr| {
+                    let pair = expr
+                        .sexpr_value()
+                        .map(|sexpr| {
+                            sexpr
+                                .item_iter()
+                                .map(|expr| {
+                                    expr.stripped_symbol_value()
+                                        .map(|value| value.to_string())
+                                        .ok_or_else(|| err_spanned!(expr.span(), "expected string"))
+                                })
+                                .collect::<Result<Vec<String>, Error>>()
+                        })
+                        .ok_or_else(|| err_spanned!(expr.span(), "expected s-expression"))??;
+                    if pair.len() != 2 {
+                        Err(err_spanned!(expr.span(), "invalid rename_in mapping"))
+                    } else {
+                        Ok((pair[0].clone(), Origin::new(pair[1].clone(), expr.span())))
+                    }
+                })
+                .collect::<Result<BTreeMap<String, Origin>, Error>>()?
                 .into_iter()
                 .collect(),
             ),
@@ -376,8 +480,8 @@ impl<'i> ModuleLoader<'i> {
         if let Some(arg_list) = rest.next() {
             if let Some(name) = arg_list.symbol_value() {
                 processed.defined.insert(name.into(), arg_list.span());
-            } else if arg_list.is_sexpr() {
-                if let Some(first_arg) = arg_list.list_data().item_iter().next() {
+            } else if let Some(sexpr_value) = arg_list.sexpr_value() {
+                if let Some(first_arg) = sexpr_value.item_iter().next() {
                     if let Some(name) = first_arg.symbol_value() {
                         processed.defined.insert(name.into(), first_arg.span());
                     }
@@ -395,8 +499,8 @@ impl<'i> ModuleLoader<'i> {
         if let Some(arg_list) = rest.next() {
             if let Some(name) = arg_list.symbol_value() {
                 processed.provides.insert(name.into(), arg_list.span());
-            } else if arg_list.is_sexpr() {
-                if let Some(first_arg) = arg_list.list_data().item_iter().next() {
+            } else if let Some(sexpr_value) = arg_list.sexpr_value() {
+                if let Some(first_arg) = sexpr_value.item_iter().next() {
                     if let Some(name) = first_arg.symbol_value() {
                         processed.provides.insert(name.into(), first_arg.span());
                     }

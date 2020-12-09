@@ -1,0 +1,3 @@
+(module some_other_mod "/bootstrap"
+  (define asdf (foo 1))
+  (provide asdf))

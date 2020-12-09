@@ -36,11 +36,3 @@ fixed_indent_symbols = [
 # For example, `if` could be formatted normally if it's short, but formatted like a `define` if long.
 smart_indent_symbols = [
 ]
-
-[[fusion.path_configs]]
-    directories = ["fusion/src"]
-    mode = "Modules"
-
-[[fusion.path_configs]]
-    directories = ["ftst"]
-    mode = "Tests"

@@ -1,12 +1,34 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+use crate::config::FusionConfig;
+use crate::error::Error;
+use std::path::Path;
 
+mod fusion_index;
+mod fusion_loader;
 mod module;
-mod module_loader;
-mod module_repo;
+mod script;
 
+pub use fusion_index::*;
+pub use fusion_loader::*;
 pub use module::*;
-pub use module_loader::*;
-pub use module_repo::*;
+pub use script::*;
+
+pub fn load_index(
+    fusion_config: &FusionConfig,
+    package_path: &Path,
+) -> Result<FusionIndexCell, Error> {
+    let mut paths = Vec::new();
+    let module_path = package_path.join("fusion/src");
+    if module_path.exists() {
+        paths.push(module_path);
+    }
+
+    let fusion_index = FusionIndex::new(package_path.into(), paths)?;
+    let fusion_loader = FusionLoader::new(fusion_config, fusion_index.clone());
+    fusion_loader.load_configured_paths(fusion_config)?;
+
+    Ok(fusion_index)
+}
 
 #[cfg(test)]
 mod test {
@@ -16,24 +38,26 @@ mod test {
     use std::path::PathBuf;
 
     #[test]
-    fn system_test() {
+    fn bootstrap_test() {
         let default_config = new_default_config();
-        let module_repo = ModuleRepo::new(
+        let fusion_index = FusionIndex::new(
             PathBuf::from("./"),
-            vec![PathBuf::from("index_tests/test_files")],
+            vec![PathBuf::from("index_tests/bootstrap/test_files")],
         )
         .unwrap();
 
-        let module_loader = ModuleLoader::new(&default_config, module_repo.clone());
-        if let Err(err) = module_loader.load_file("index_tests/test_files/some_mod.fusion") {
+        let fusion_loader = FusionLoader::new(&default_config, fusion_index.clone());
+        if let Err(err) =
+            fusion_loader.load_module_file("index_tests/bootstrap/test_files/some_mod.fusion")
+        {
             assert!(false, format!("\n{}", err));
         }
 
-        let expected_repo = include_str!("../../index_tests/expected-repo.txt").trim();
-        let actual_repo = format!("{:#?}", module_repo);
+        let expected_repo = include_str!("../../index_tests/bootstrap/expected-repo.txt").trim();
+        let actual_repo = format!("{:#?}", fusion_index);
         if expected_repo != &actual_repo {
             let msg = format!(
-                "\nIndexing index_tests/test_files/some_mod.fusion failed:\n{}\n",
+                "\nIndexing index_tests/bootstrap/test_files failed:\n{}\n",
                 human_diff_lines(expected_repo, actual_repo)
             );
             assert!(false, msg);

@@ -1,26 +1,10 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 use crate::error::Error;
-use std::path::{Component, Path, PathBuf};
+use std::path::PathBuf;
 use toml::Value;
 
 const NEWLINE_MODE_NO_CHANGE: &'static str = "no-change";
 const NEWLINE_MODE_FIX_UP: &'static str = "fix-up";
-
-#[derive(Deserialize)]
-pub enum FusionPathMode {
-    /// Interpret files as modules, and follow the module language for top-level definitions
-    Modules,
-    /// Interpret files as tests, and use `/fusion` as the top-level language
-    Tests,
-}
-
-#[derive(Deserialize)]
-pub struct FusionPathConfig {
-    /// Which directories this config applies to.
-    pub directories: Vec<String>,
-    /// Whether or not module or test mode is enabled for this directory
-    pub mode: FusionPathMode,
-}
 
 pub struct FusionConfig {
     /// Newline mode 'no-change' will make zero changes to newlines in the file.
@@ -34,8 +18,6 @@ pub struct FusionConfig {
     /// Function/macro names that should use fixed indent if their body is long.
     /// For example, `if` could be formatted normally if it's short, but formatted like a `define` if long.
     pub smart_indent_symbols: Vec<String>,
-    /// Directory-specific config values.
-    pub path_configs: Vec<FusionPathConfig>,
 }
 
 impl FusionConfig {
@@ -45,7 +27,6 @@ impl FusionConfig {
             format_multiline_string_contents: toml.format_multiline_string_contents.unwrap(),
             fixed_indent_symbols: toml.fixed_indent_symbols.unwrap(),
             smart_indent_symbols: toml.smart_indent_symbols.unwrap(),
-            path_configs: toml.path_configs.unwrap(),
         }
     }
 
@@ -61,7 +42,6 @@ impl FusionConfig {
             smart_indent_symbols: toml
                 .smart_indent_symbols
                 .unwrap_or(defaults.smart_indent_symbols),
-            path_configs: toml.path_configs.unwrap_or(defaults.path_configs),
         }
     }
 }
@@ -74,36 +54,11 @@ struct TomlFusionConfig {
     pub format_multiline_string_contents: Option<bool>,
     pub fixed_indent_symbols: Option<Vec<String>>,
     pub smart_indent_symbols: Option<Vec<String>>,
-    pub path_configs: Option<Vec<FusionPathConfig>>,
 }
 
 impl FusionConfig {
     pub fn newline_fix_up_mode(&self) -> bool {
         self.newline_mode == NEWLINE_MODE_FIX_UP
-    }
-
-    pub fn resolve_path_config<'a>(&'a self, path: &Path) -> Option<&'a FusionPathConfig> {
-        let maybe_dir_name = path
-            .components()
-            .next()
-            .map(|component| match component {
-                Component::Normal(name) => name.to_str(),
-                _ => None,
-            })
-            .flatten();
-
-        if let Some(dir_name) = maybe_dir_name {
-            for config in &self.path_configs {
-                if config
-                    .directories
-                    .iter()
-                    .any(|dir_name_matcher| dir_name == dir_name_matcher)
-                {
-                    return Some(config);
-                }
-            }
-        }
-        None
     }
 }
 

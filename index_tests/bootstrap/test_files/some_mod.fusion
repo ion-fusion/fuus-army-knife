@@ -1,0 +1,5 @@
+(module some_mod "/bootstrap"
+  (require
+    // try to fool the tool with a well placed comment
+    "/some_other_mod")
+  (provide asdf))

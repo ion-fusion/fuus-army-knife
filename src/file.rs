@@ -34,29 +34,15 @@ impl FusionFile {
         fusion_config: &FusionConfig,
         path: P,
     ) -> Result<Vec<FusionFile>, Error> {
-        let mut fusion_files: Vec<FusionFile> = Vec::new();
-        let directory_walker = ignore::WalkBuilder::new(path.as_ref())
-            .follow_links(true)
-            .sort_by_file_path(|a, b| a.cmp(b))
-            .build();
-        for entry in directory_walker {
-            let entry = entry.map_err(|err| err_generic!("Failed to read input file: {}", err))?;
-            let path = entry.path();
-            let extension = path.extension().and_then(|extension| extension.to_str());
-            if !entry
-                .file_type()
-                .map(|file_type| file_type.is_dir())
-                .unwrap_or(true)
-            {
-                if let Some("fusion") = extension {
-                    let contents =
-                        FusionFileContent::load(path).map_err(|err| err_generic!("{}", err))?;
-                    let fusion_file = contents
-                        .parse(fusion_config)
-                        .map_err(|err| err_generic!("{}", err))?;
-                    fusion_files.push(fusion_file);
-                }
-            }
+        let fusion_file_paths = find_files(path, ".fusion")?;
+        let mut fusion_files = Vec::new();
+        for fusion_file_path in &fusion_file_paths {
+            let contents =
+                FusionFileContent::load(fusion_file_path).map_err(|err| err_generic!("{}", err))?;
+            let fusion_file = contents
+                .parse(fusion_config)
+                .map_err(|err| err_generic!("{}", err))?;
+            fusion_files.push(fusion_file);
         }
         Ok(fusion_files)
     }
@@ -65,6 +51,33 @@ impl FusionFile {
         let debug_view = format!("{:#?}", self.ast);
         replace_spans(&self.contents, &debug_view)
     }
+}
+
+/// Include the "." in `desired_extension`
+pub fn find_files<P: AsRef<Path>>(path: P, desired_extension: &str) -> Result<Vec<PathBuf>, Error> {
+    let mut fusion_files: Vec<PathBuf> = Vec::new();
+    let directory_walker = ignore::WalkBuilder::new(path.as_ref())
+        .follow_links(true)
+        .sort_by_file_path(|a, b| a.cmp(b))
+        .build();
+    for entry in directory_walker {
+        let entry = entry.map_err(|err| err_generic!("Failed to read input file: {}", err))?;
+        let path = entry.path();
+        if !entry
+            .file_type()
+            .map(|file_type| file_type.is_dir())
+            .unwrap_or(true)
+        {
+            if path
+                .as_os_str()
+                .to_string_lossy()
+                .ends_with(desired_extension)
+            {
+                fusion_files.push(path.into());
+            }
+        }
+    }
+    Ok(fusion_files)
 }
 
 fn replace_spans(file_content: &str, debug_view: &str) -> String {

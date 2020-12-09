@@ -1,0 +1,9 @@
+(module base "/fusion/private/kernel"
+  (require "/bootstrap/foo")
+  (require (only_in "/bootstrap/bar" bar))
+
+  (define (baz a) (bar a))
+
+  (provide foo
+           (rename_out (bar the_best_bar))
+           baz))

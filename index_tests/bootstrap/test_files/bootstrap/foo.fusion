@@ -1,0 +1,4 @@
+(module foo "/fusion/private/kernel"
+  (define (foo a) a)
+
+  (provide (all_defined_out)))

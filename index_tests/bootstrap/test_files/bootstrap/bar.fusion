@@ -1,0 +1,6 @@
+(module bar "/fusion/private/kernel"
+  (require "/bootstrap/foo")
+
+  (define (bar a) (foo a))
+
+  (provide bar))

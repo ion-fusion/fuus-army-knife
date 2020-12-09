@@ -1,8 +1,7 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
-use crate::config::{FusionConfig, FusionPathConfig};
 use crate::error::Error;
 use crate::file::FusionFile;
-use crate::index::{Module, ModuleCell};
+use crate::index::{Module, ModuleCell, ScriptCell};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -11,20 +10,21 @@ use std::rc::Rc;
 
 pub const TOP_LEVEL_MODULE_NAME: &'static str = "/fusion/private/kernel";
 
-pub type ModuleRepoCell = Rc<RefCell<ModuleRepo>>;
+pub type FusionIndexCell = Rc<RefCell<FusionIndex>>;
 
-pub struct ModuleRepo {
+pub struct FusionIndex {
     current_package_path: PathBuf,
     module_paths: Vec<PathBuf>,
     modules: BTreeMap<String, ModuleCell>,
+    scripts: BTreeMap<String, ScriptCell>,
 }
 
-impl ModuleRepo {
+impl FusionIndex {
     pub fn new(
         current_package_path: PathBuf,
         module_paths: Vec<PathBuf>,
-    ) -> Result<ModuleRepoCell, Error> {
-        let result = Rc::new(RefCell::new(ModuleRepo {
+    ) -> Result<FusionIndexCell, Error> {
+        let result = Rc::new(RefCell::new(FusionIndex {
             current_package_path: current_package_path
                 .canonicalize()
                 .map_err(|err| err_generic!("failed to canonicalize path: {}", err))?,
@@ -36,12 +36,17 @@ impl ModuleRepo {
                 })
                 .collect::<Result<Vec<PathBuf>, Error>>()?,
             modules: BTreeMap::new(),
+            scripts: BTreeMap::new(),
         }));
         println!("Module repository initialized with paths:");
         for path in &result.borrow().module_paths {
             println!("  {:?}", path);
         }
         Ok(result)
+    }
+
+    pub fn current_package_path(&self) -> &Path {
+        &self.current_package_path
     }
 
     pub fn get_root_module(&mut self) -> ModuleCell {
@@ -66,16 +71,13 @@ impl ModuleRepo {
         self.modules.insert(name, module);
     }
 
-    pub fn resolve_path_config<'a>(
-        &self,
-        fusion_config: &'a FusionConfig,
-        path: &Path,
-    ) -> Option<&'a FusionPathConfig> {
-        let path = path.canonicalize().ok()?;
-        if let Ok(relative) = path.strip_prefix(&self.current_package_path) {
-            return fusion_config.resolve_path_config(relative);
-        }
-        None
+    pub fn get_script(&self, name: &String) -> Option<ScriptCell> {
+        self.scripts.get(name).cloned()
+    }
+
+    pub fn put_script(&mut self, script: ScriptCell) {
+        let name = script.borrow().name.clone();
+        self.scripts.insert(name, script);
     }
 
     pub fn find_module_file(&self, module_name: &str) -> Option<PathBuf> {
@@ -108,11 +110,12 @@ impl ModuleRepo {
     }
 }
 
-impl fmt::Debug for ModuleRepo {
+impl fmt::Debug for FusionIndex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ModuleRepo")
+        f.debug_struct("FusionIndex")
             // omit the module_paths to make testing easier
             .field("modules", &self.modules)
+            .field("scripts", &self.scripts)
             .finish()
     }
 }

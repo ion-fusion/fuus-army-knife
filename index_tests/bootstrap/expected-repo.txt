@@ -1,0 +1,101 @@
+RefCell {
+    value: FusionIndex {
+        modules: {
+            "/bootstrap": RefCell {
+                value: Module {
+                    name: "/bootstrap",
+                    language: "/bootstrap/base",
+                    requires: [],
+                    provides: {},
+                },
+            },
+            "/bootstrap/bar": RefCell {
+                value: Module {
+                    name: "/bootstrap/bar",
+                    language: "/fusion/private/kernel",
+                    requires: [
+                        RequireForm {
+                            module: "/bootstrap/foo",
+                            required: All,
+                        },
+                    ],
+                    provides: {
+                        "bar": [Span(106->109)],
+                    },
+                },
+            },
+            "/bootstrap/base": RefCell {
+                value: Module {
+                    name: "/bootstrap/base",
+                    language: "/fusion/private/kernel",
+                    requires: [
+                        RequireForm {
+                            module: "/bootstrap/foo",
+                            required: All,
+                        },
+                        RequireForm {
+                            module: "/bootstrap/bar",
+                            required: Names(
+                                [
+                                    Origin {
+                                        name: "bar",
+                                        originates_from: [Span(104->107)],
+                                    },
+                                ],
+                            ),
+                        },
+                    ],
+                    provides: {
+                        "baz": [Span(208->211)],
+                        "foo": [Span(150->153)],
+                        "the_best_bar": [Span(104->107)],
+                    },
+                },
+            },
+            "/bootstrap/foo": RefCell {
+                value: Module {
+                    name: "/bootstrap/foo",
+                    language: "/fusion/private/kernel",
+                    requires: [],
+                    provides: {
+                        "foo": [Span(48->51)],
+                    },
+                },
+            },
+            "/fusion/private/kernel": RefCell {
+                value: Module {
+                    name: "/fusion/private/kernel",
+                    language: "/fusion/private/kernel",
+                    requires: [],
+                    provides: {},
+                },
+            },
+            "/some_mod": RefCell {
+                value: Module {
+                    name: "/some_mod",
+                    language: "/bootstrap",
+                    requires: [
+                        RequireForm {
+                            module: "/some_other_mod",
+                            required: All,
+                        },
+                    ],
+                    provides: {
+                        "asdf": [Span(130->134)],
+                    },
+                },
+            },
+            "/some_other_mod": RefCell {
+                value: Module {
+                    name: "/some_other_mod",
+                    language: "/bootstrap",
+                    requires: [],
+                    provides: {
+                        "asdf": [Span(71->75)],
+                    },
+                },
+            },
+        },
+        scripts: {},
+    },
+}

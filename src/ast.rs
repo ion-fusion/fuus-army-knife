@@ -212,12 +212,31 @@ impl Expr {
         }
     }
 
-    pub fn list_data<'a>(&'a self) -> &'a ListData {
+    pub fn into_struct_value(self) -> Option<ListData> {
         match self {
-            Expr::List(data) => data,
-            Expr::SExpr(data) => data,
-            Expr::Struct(data) => data,
-            _ => panic!("called list_data on a non-list"),
+            Expr::Struct(data) => Some(data),
+            _ => None,
+        }
+    }
+
+    pub fn sexpr_value<'a>(&'a self) -> Option<&'a ListData> {
+        match self {
+            Expr::SExpr(data) => Some(data),
+            _ => None,
+        }
+    }
+
+    pub fn struct_value<'a>(&'a self) -> Option<&'a ListData> {
+        match self {
+            Expr::Struct(data) => Some(data),
+            _ => None,
+        }
+    }
+
+    pub fn list_value<'a>(&'a self) -> Option<&'a ListData> {
+        match self {
+            Expr::List(data) => Some(data),
+            _ => None,
         }
     }
 
