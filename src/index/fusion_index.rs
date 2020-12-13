@@ -62,6 +62,14 @@ impl FusionIndex {
         self.modules.get(TOP_LEVEL_MODULE_NAME).unwrap().clone()
     }
 
+    pub fn module_iter<'a>(&'a self) -> impl Iterator<Item = &'a ModuleCell> {
+        self.modules.iter().map(|entry| entry.1)
+    }
+
+    pub fn script_iter<'a>(&'a self) -> impl Iterator<Item = &'a ScriptCell> {
+        self.scripts.iter().map(|entry| entry.1)
+    }
+
     pub fn get_module(&self, name: &String) -> Option<ModuleCell> {
         self.modules.get(name).cloned()
     }

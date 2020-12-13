@@ -63,6 +63,14 @@ impl<'i> FusionLoader<'i> {
             return Ok(module);
         }
 
+        self.reload_module_file(module_name, file_path.as_ref())
+    }
+
+    pub fn reload_module_file(
+        &self,
+        module_name: String,
+        file_path: &Path,
+    ) -> Result<ModuleCell, Error> {
         let file = FusionFile::load(self.config, &file_path)
             .map_err(|err| err_generic!("failed to load {:?}: {}", file_path, err))?;
 
