@@ -1,0 +1,5 @@
+// This would come from FusionJava ordinarily
+(module fusion "/fusion/private/kernel"
+  (define (displayln msg) true)
+
+  (provide displayln))

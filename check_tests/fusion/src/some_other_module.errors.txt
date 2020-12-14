@@ -1,0 +1,9 @@
+[
+ --> "fusion/src/some_other_module.fusion":7:20
+  |
+7 |            (third (mul first second))] // ERROR: mul doesn't exist
+  |                    ^-^
+  |
+  = Unbound identifier mul
+
+]

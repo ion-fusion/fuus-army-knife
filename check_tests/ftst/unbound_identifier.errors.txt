@@ -1,0 +1,108 @@
+[
+ --> "ftst/unbound_identifier.fusion":2:1
+  |
+2 | foo // ERROR
+  | ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "ftst/unbound_identifier.fusion":3:2
+  |
+3 | (foo) // ERROR
+  |  ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "ftst/unbound_identifier.fusion":4:2
+  |
+4 | [foo] // ERROR
+  |  ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "ftst/unbound_identifier.fusion":5:6
+  |
+5 | { x: foo } // ERROR
+  |      ^-^
+  |
+  = Unbound identifier foo
+
+---
+
+ --> "ftst/unbound_identifier.fusion":9:16
+  |
+9 | (let [(foo 5)] bar) // ERROR
+  |                ^-^
+  |
+  = Unbound identifier bar
+
+---
+
+  --> "ftst/unbound_identifier.fusion":11:17
+   |
+11 | (lets [(foo 5)] bar) // ERROR
+   |                 ^-^
+   |
+   = Unbound identifier bar
+
+---
+
+  --> "ftst/unbound_identifier.fusion":15:15
+   |
+15 |       (bar (+ foo 1))] // ERROR
+   |               ^-^
+   |
+   = Unbound identifier foo
+
+---
+
+  --> "ftst/unbound_identifier.fusion":23:20
+   |
+23 | (lambda (x y) (+ x z)) // ERROR
+   |                    ^
+   |
+   = Unbound identifier z
+
+---
+
+  --> "ftst/unbound_identifier.fusion":25:13
+   |
+25 | (|x y| (+ x z)) // ERROR
+   |             ^
+   |
+   = Unbound identifier z
+
+---
+
+  --> "ftst/unbound_identifier.fusion":27:14
+   |
+27 | (lambda args definitely_unbound) // ERROR
+   |              ^----------------^
+   |
+   = Unbound identifier definitely_unbound
+
+---
+
+  --> "ftst/unbound_identifier.fusion":43:41
+   |
+43 | (quasiquote (foo baz undefined (unquote error_me))) // ERROR
+   |                                         ^------^
+   |
+   = Unbound identifier error_me
+
+---
+
+  --> "ftst/unbound_identifier.fusion":45:35
+   |
+45 | (define test_case_inner_undefined im_definitely_undefined) // ERROR
+   |                                   ^---------------------^
+   |
+   = Unbound identifier im_definitely_undefined
+
+]

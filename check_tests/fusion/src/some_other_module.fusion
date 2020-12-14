@@ -1,0 +1,10 @@
+(module some_other_module "/fusion"
+  (require (only_in "/some_module" add sub))
+
+  (define (some_computation)
+    (lets [(first (add 1 2)),
+           (second (sub 2 (add 1 1))),
+           (third (mul first second))] // ERROR: mul doesn't exist
+      third))
+
+  (provide some_computation))

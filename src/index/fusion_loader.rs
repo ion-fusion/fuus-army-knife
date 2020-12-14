@@ -284,13 +284,13 @@ impl<'i> FusionLoader<'i> {
                     }
                     _ => Err(err_spanned!(
                         data.span,
-                        "argument 0 to require must be string or s-expr"
+                        "arguments to require must be string or s-expr"
                     )),
                 },
                 Expr::SExpr(data) => self.visit_require_sexpr(processed, data),
                 _ => Err(err_spanned!(
                     expr.span(),
-                    "argument 0 to require must be string or s-expr"
+                    "arguments to require must be string or s-expr"
                 )),
             }?
         }
@@ -378,7 +378,7 @@ impl<'i> FusionLoader<'i> {
                                 .map(|expr| {
                                     expr.stripped_symbol_value()
                                         .map(|value| value.to_string())
-                                        .ok_or_else(|| err_spanned!(expr.span(), "expected string"))
+                                        .ok_or_else(|| err_spanned!(expr.span(), "expected symbol"))
                                 })
                                 .collect::<Result<Vec<String>, Error>>()
                         })

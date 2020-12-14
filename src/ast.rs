@@ -148,6 +148,22 @@ pub struct AtomicData {
     pub value: String,
 }
 
+impl AtomicData {
+    pub fn stripped_symbol_value<'a>(&'a self) -> Option<&'a str> {
+        if self.typ == AtomicType::Symbol {
+            Some(
+                if self.value.starts_with("'") && self.value.ends_with("'") {
+                    &self.value[1..(self.value.len() - 1)]
+                } else {
+                    &self.value
+                },
+            )
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Expr {
     Atomic(AtomicData),

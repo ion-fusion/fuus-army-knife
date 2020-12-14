@@ -1,4 +1,5 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+use crate::check::unbound::{ModuleOrScript, UnboundChecker};
 use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::index::{self, FusionIndexCell, FusionLoader};
@@ -11,6 +12,10 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::time::Duration;
+
+mod error_tracker;
+mod scope;
+mod unbound;
 
 pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Error> {
     // Start by indexing the entire package
@@ -40,17 +45,30 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
                     match reference {
                         // If it's a module file, reload it
                         Reference::Module(name) => {
-                            match fusion_loader.reload_module_file(name.into(), &path) {
-                                Ok(_) => youre_awesome(),
-                                Err(err) => error_occurred(&current_package_path, &path, err),
+                            let errors = reload_module(
+                                &current_package_path,
+                                fusion_config,
+                                &fusion_index,
+                                &fusion_loader,
+                                name,
+                                &path,
+                            );
+                            if errors.is_empty() {
+                                youre_awesome();
+                            } else {
+                                for error in errors {
+                                    println!("{}\n", error);
+                                }
                             }
                         }
                         // If it's referenced by a bunch of scripts, reload all of them
                         Reference::Scripts(names) => {
-                            reload_scripts(&fusion_index, &fusion_loader, names)
+                            reload_scripts(&fusion_config, &fusion_index, &fusion_loader, names)
                         }
                     }
                 } else {
+                    // TODO: Remove this debug print once confident in correctness
+                    println!("(debug) References:\n {:#?}", file_references);
                     println!("Ignoring change to {:?}", path);
                 }
             }
@@ -73,7 +91,61 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
     }
 }
 
+fn reload_module(
+    package_path: &Path,
+    config: &FusionConfig,
+    fusion_index: &FusionIndexCell,
+    fusion_loader: &FusionLoader<'_>,
+    name: &String,
+    path: &Path,
+) -> Vec<Error> {
+    let mut errors = Vec::new();
+    match fusion_loader.reload_module_file(name.into(), &path) {
+        Ok(_) => {
+            errors.extend(
+                UnboundChecker::new(config, fusion_index.clone())
+                    .check(ModuleOrScript::Module(name.into()))
+                    .into_iter(),
+            );
+            if errors.is_empty() {
+                let impacted_modules: Vec<String> = fusion_index
+                    .borrow()
+                    .module_iter()
+                    .filter(|module| {
+                        module.borrow().language == *name
+                            || module
+                                .borrow()
+                                .requires
+                                .iter()
+                                .any(|require| require.module.borrow().name == *name)
+                    })
+                    .map(|module| module.borrow().name.clone())
+                    .collect();
+                for module_name in impacted_modules {
+                    let module_path =
+                        package_path.join(format!("fusion/src{}.fusion", module_name));
+                    errors.extend(
+                        reload_module(
+                            package_path,
+                            config,
+                            fusion_index,
+                            fusion_loader,
+                            &module_name,
+                            &module_path,
+                        )
+                        .into_iter(),
+                    );
+                }
+                // TODO: Reload all the scripts that use the reloaded module
+            }
+        }
+        Err(err) => error_occurred(&package_path, &path, err),
+    }
+    errors
+}
+
 fn reload_scripts(
+    config: &FusionConfig,
     fusion_index: &FusionIndexCell,
     fusion_loader: &FusionLoader<'_>,
     names: &HashSet<String>,
@@ -102,7 +174,16 @@ fn reload_scripts(
                 break;
             }
         }
-        println!("Reloaded {}.", script_name);
+        let errors = UnboundChecker::new(config, fusion_index.clone())
+            .check(ModuleOrScript::Script(script_name.into()));
+        if errors.is_empty() {
+            println!("Reloaded {}.", script_name);
+        } else {
+            success = false;
+            for error in errors {
+                println!("{}\n", error);
+            }
+        }
     }
     if success {
         youre_awesome();
@@ -173,11 +254,8 @@ fn build_references(
 
     for module in fusion_index.borrow().module_iter() {
         let module = module.borrow();
-        let file_name = package_path.join(&module.file.file_name);
-        if watch_paths
-            .iter()
-            .any(|path| file_name.strip_prefix(path).is_ok())
-        {
+        let file_name = package_path.join(format!("fusion/src{}.fusion", module.name));
+        if file_name.exists() {
             assert!(!references.contains_key(&file_name));
             references.insert(file_name, Reference::Module(module.name.clone()));
         }

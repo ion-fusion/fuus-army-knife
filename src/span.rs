@@ -3,7 +3,7 @@ use pest::Span;
 use std::fmt;
 
 // Copyable alternative to Pest's Span
-#[derive(new, Clone, Copy, PartialEq, Eq)]
+#[derive(new, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ShortSpan {
     pub start: usize,
     pub end: usize,

@@ -1,0 +1,49 @@
+// Simple cases
+foo // ERROR
+(foo) // ERROR
+[foo] // ERROR
+{ x: foo } // ERROR
+
+// Trivial let/lets
+(let [(foo 5)] foo)
+(let [(foo 5)] bar) // ERROR
+(lets [(foo 5)] foo)
+(lets [(foo 5)] bar) // ERROR
+
+// Let vs. lets
+(let [(foo 5),
+      (bar (+ foo 1))] // ERROR
+  bar)
+(lets [(foo 5),
+       (bar (+ foo 1))]
+  bar)
+
+// Lambda bindings
+(lambda (x y) (+ x y))
+(lambda (x y) (+ x z)) // ERROR
+(|x y| (+ x y))
+(|x y| (+ x z)) // ERROR
+(lambda args args)
+(lambda args definitely_unbound) // ERROR
+
+// THING is defined later, which is valid
+THING
+
+// Defines
+(define THING 5)
+
+THING
+(+ THING THING)
+
+// Ignore everything in quote
+(quote definitely_unbound_but_doesnt_matter_because_quote)
+
+// Quasiquote madness
+(quasiquote (foo baz undefined))
+(quasiquote (foo baz undefined (unquote error_me))) // ERROR
+
+(define test_case_inner_undefined im_definitely_undefined) // ERROR
+
+// Require all things from some_module (include add/sub)
+(require "/some_module")
+(add (sub 5 2) 1)

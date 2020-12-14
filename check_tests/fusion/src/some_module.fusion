@@ -1,0 +1,5 @@
+(module some_module "/fusion"
+  (define (add a b) true)
+  (define (sub a b) true)
+
+  (provide add sub))
