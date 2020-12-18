@@ -27,6 +27,7 @@ fixed_indent_symbols = [
     "let",
     "lets",
     "map",
+    "module",
     "unless",
     "when",
     "|",
