@@ -77,7 +77,7 @@ pub fn new_default_config() -> FusionConfig {
     )
 }
 
-pub fn load_config(config_file_name: Option<&str>) -> Result<FusionConfig, Error> {
+pub fn load_config(config_file_name: Option<&str>, silent: bool) -> Result<FusionConfig, Error> {
     let default_config = new_default_config();
     let config_path = match config_file_name {
         // Path given via CLI; just use it as is
@@ -96,9 +96,11 @@ pub fn load_config(config_file_name: Option<&str>) -> Result<FusionConfig, Error
     };
 
     if !config_path.exists() {
-        println!("Using default config...");
+        if !silent {
+            println!("Using default config...");
+        }
         return Ok(default_config);
-    } else {
+    } else if !silent {
         println!("Using config file {:?}...", config_path);
     }
 
