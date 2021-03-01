@@ -41,7 +41,16 @@ fn main() {
     }
 
     let config_file_name = app_matches.value_of("config");
-    let fusion_config = load_config(config_file_name).unwrap_or_else(|error| bail!("{}", error));
+
+    if let Some(_) = app_matches.subcommand_matches("format-server") {
+        let fusion_config =
+            load_config(config_file_name, true).unwrap_or_else(|error| bail!("{}", error));
+        subcommand_format_server(&fusion_config);
+        return;
+    }
+
+    let fusion_config =
+        load_config(config_file_name, false).unwrap_or_else(|error| bail!("{}", error));
 
     if let Some(matches) = app_matches.subcommand_matches("debug-parser") {
         let path = matches.value_of("FILE").unwrap();
@@ -57,6 +66,9 @@ fn main() {
         subcommand_check_correctness_watch(&fusion_config);
     } else if let Some(_) = app_matches.subcommand_matches("checkstyle-all") {
         subcommand_checkstyle_all(&fusion_config);
+    } else if let Some(matches) = app_matches.subcommand_matches("checkstyle") {
+        let path = matches.value_of("FILE").unwrap();
+        subcommand_checkstyle(&fusion_config, path);
     } else {
         drop(clap_app.print_help());
         println!("\n")
@@ -104,6 +116,15 @@ fn configure_clap_app<'a, 'b>() -> App<'a, 'b> {
             SubCommand::with_name("checkstyle-all")
                 .about("recursively checks adherence to format on all Fusion files in the current directory"),
         )
+        .subcommand(
+            SubCommand::with_name("format-server")
+                .about("starts a format server which listens on stdin and outputs formatted code to stdout"),
+        )
+        .subcommand(
+            SubCommand::with_name("checkstyle")
+                .about("checks the style of a single file")
+                .arg(Arg::with_name("FILE").required(true).index(1)),
+        )
         .subcommand(SubCommand::with_name("help"))
 }
 
@@ -148,6 +169,22 @@ fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) 
     });
 }
 
+fn checkstyle(fusion_config: &FusionConfig, file: &FusionFile) -> bool {
+    println!("Checking {:?}...", file.file_name);
+    let formatted = format::format(fusion_config, &file.ast);
+    let expected = formatted.trim_end();
+    let actual = file.contents.trim_end();
+    if expected != actual {
+        println!(
+            "File {:?} doesn't adhere to correct style. See diff to correct below:",
+            file.file_name
+        );
+        println!("{}", diff_util::human_diff_lines(actual, expected));
+        return false;
+    }
+    return true;
+}
+
 fn subcommand_format(fusion_config: &FusionConfig, path: &str) {
     let file_content = FusionFileContent::load(path).unwrap_or_else(|err| bail!("{}", err));
     let file = file_content
@@ -176,16 +213,7 @@ fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
         .unwrap_or_else(|err| bail!("{}", err));
     let mut passed = true;
     for file in &fusion_files {
-        println!("Checking {:?}...", file.file_name);
-        let formatted = format::format(fusion_config, &file.ast);
-        let expected = formatted.trim_end();
-        let actual = file.contents.trim_end();
-        if expected != actual {
-            println!(
-                "File {:?} doesn't adhere to correct style. See diff to correct below:",
-                file.file_name
-            );
-            println!("{}", diff_util::human_diff_lines(actual, expected));
+        if !checkstyle(fusion_config, file) {
             passed = false;
         }
     }
@@ -194,4 +222,22 @@ fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
     } else {
         println!("All files adhere to correct style.")
     }
+}
+
+fn subcommand_checkstyle(fusion_config: &FusionConfig, path: &str) {
+    let file = FusionFile::load(fusion_config, path).unwrap_or_else(|err| bail!("{}", err));
+    if !checkstyle(fusion_config, &file) {
+        bail!("Checkstyle failed.")
+    } else {
+        println!("{} adheres to correct style.", path)
+    }
+}
+
+fn subcommand_format_server(fusion_config: &FusionConfig) {
+    let file_content = FusionFileContent::load_stdin().unwrap_or_else(|err| bail!("{}", err));
+    let file = file_content
+        .parse(fusion_config)
+        .unwrap_or_else(|err| bail!("{}", err));
+    let formatted = format::format(fusion_config, &file.ast);
+    print!("{}", formatted)
 }

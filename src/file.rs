@@ -5,6 +5,7 @@ use crate::error::Error;
 use crate::parser;
 use regex::{Captures, Regex};
 use std::fs::read_to_string;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
 #[derive(new, Debug)]
@@ -117,6 +118,13 @@ impl FusionFileContent {
                 err_generic!("Failed to load file {}: {}", path.as_ref().display(), err)
             })?,
         ))
+    }
+    pub fn load_stdin() -> Result<FusionFileContent, Error> {
+        let mut buf = String::new();
+        io::stdin()
+            .read_to_string(&mut buf)
+            .map_err(|err| err_generic!("Failed to load stdin: {}", err))?;
+        Ok(FusionFileContent::new(PathBuf::from(""), buf))
     }
 
     pub fn parse(self, fusion_config: &FusionConfig) -> Result<FusionFile, Error> {
