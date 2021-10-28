@@ -140,6 +140,84 @@
     ),
     SExpr(
         ListData {
+            span: "(define (trueFunc a)\n  (+ 1 a))",
+            annotations: [],
+            items: [
+                Atomic(
+                    AtomicData {
+                        typ: Symbol,
+                        span: "define",
+                        annotations: [],
+                        value: "define",
+                    },
+                ),
+                SExpr(
+                    ListData {
+                        span: "(trueFunc a)",
+                        annotations: [],
+                        items: [
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "trueFunc",
+                                    annotations: [],
+                                    value: "trueFunc",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "a",
+                                    annotations: [],
+                                    value: "a",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                Newlines(
+                    NewlinesData { "\n  ", newline_count: 1 },
+                ),
+                SExpr(
+                    ListData {
+                        span: "(+ 1 a)",
+                        annotations: [],
+                        items: [
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "+",
+                                    annotations: [],
+                                    value: "+",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Integer,
+                                    span: "1",
+                                    annotations: [],
+                                    value: "1",
+                                },
+                            ),
+                            Atomic(
+                                AtomicData {
+                                    typ: Symbol,
+                                    span: "a",
+                                    annotations: [],
+                                    value: "a",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            ],
+        },
+    ),
+    Newlines(
+        NewlinesData { "\n\n", newline_count: 2 },
+    ),
+    SExpr(
+        ListData {
             span: "(define (\n         some_fun // Comment o..." (truncated),
             annotations: [],
             items: [
@@ -451,5 +529,8 @@
                 ),
             ],
         },
+    ),
+    Newlines(
+        NewlinesData { "\n", newline_count: 1 },
     ),
 ]

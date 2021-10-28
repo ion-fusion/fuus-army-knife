@@ -5,6 +5,9 @@
 (define (some_fun a b)
   (+ 1 2))
 
+(define (trueFunc a)
+  (+ 1 a))
+
 (define (
          some_fun // Comment on function
          a // Comment on arg a

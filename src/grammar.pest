@@ -26,7 +26,7 @@ blob = ${ "{{" ~ BLOB_INNER ~ "}}" }
     BLOB_INNER_CHAR = @{ (!"}}" ~ ANY) }
 clob = ${ "{{" ~ WHITESPACE? ~ (string ~ WHITESPACE?)+ ~ WHITESPACE? ~ "}}" }
 
-boolean = @{ "true" | "false" }
+boolean = @{ ("true" | "false") ~ !SYMBOL_TAIL_CHARS  }
 
 integer = @{ HEX_INT | BINARY_INT | DECIMAL_INT }
     DECIMAL_INT = @{
