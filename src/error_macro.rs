@@ -1,4 +1,5 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 /// Macro that produces Error::Generic using `format!(...)` syntax
 macro_rules! err_generic {

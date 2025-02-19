@@ -1,4 +1,5 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 use colorful::{Color, Colorful};
 use diff::Result;
 

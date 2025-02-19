@@ -1,4 +1,5 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 use crate::ast::Expr;
 use crate::config::FusionConfig;
 use crate::error::Error;
