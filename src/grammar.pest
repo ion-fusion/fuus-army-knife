@@ -1,4 +1,5 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 WHITESPACE = { (" " | "\t" | NEWLINE)+ }
 
 COMMENT = { any_comment }
