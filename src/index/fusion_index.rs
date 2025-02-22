@@ -21,10 +21,7 @@ pub struct FusionIndex {
 }
 
 impl FusionIndex {
-    pub fn new(
-        current_package_path: PathBuf,
-        module_paths: Vec<PathBuf>,
-    ) -> Result<FusionIndexCell, Error> {
+    pub fn new(current_package_path: PathBuf, module_paths: Vec<PathBuf>) -> Result<FusionIndexCell, Error> {
         let result = Rc::new(RefCell::new(FusionIndex {
             current_package_path: current_package_path
                 .canonicalize()

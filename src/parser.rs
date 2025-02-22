@@ -96,15 +96,10 @@ fn visit_comment(pair: FPair<'_>) -> ParseResult {
     let comment = pair.as_span().as_str();
     let span: ShortSpan = pair.as_span().into();
 
-    let reparsed = FusionLexer::parse(Rule::any_comment, comment)?
-        .next()
-        .unwrap();
+    let reparsed = FusionLexer::parse(Rule::any_comment, comment)?.next().unwrap();
     match reparsed.as_rule() {
         Rule::line_comment => Ok(vec![
-            Expr::CommentLine(NonAnnotatedStringData::new(
-                span,
-                pair.as_str().trim_end().into(),
-            )),
+            Expr::CommentLine(NonAnnotatedStringData::new(span, pair.as_str().trim_end().into())),
             Expr::Newlines(NewlinesData::new(span, 1)),
         ]),
         Rule::block_comment => result!(
@@ -199,10 +194,7 @@ fn visit_whitespace(pair: FPair<'_>) -> ParseResult {
     let span = pair.as_span();
     let newline_count = count_newlines(span.as_str());
     if newline_count > 0 {
-        return result!(
-            Newlines,
-            NewlinesData::new(span.into(), newline_count as u16)
-        );
+        return result!(Newlines, NewlinesData::new(span.into(), newline_count as u16));
     }
     Ok(Vec::new())
 }
@@ -370,10 +362,7 @@ mod parser_tests {
 
     #[test]
     fn test_blob() {
-        test!(
-            "../parser_tests/blob.input.fusion",
-            "../parser_tests/blob.ast.txt"
-        );
+        test!("../parser_tests/blob.input.fusion", "../parser_tests/blob.ast.txt");
     }
 
     #[test]
@@ -394,18 +383,12 @@ mod parser_tests {
 
     #[test]
     fn test_clob() {
-        test!(
-            "../parser_tests/clob.input.fusion",
-            "../parser_tests/clob.ast.txt"
-        );
+        test!("../parser_tests/clob.input.fusion", "../parser_tests/clob.ast.txt");
     }
 
     #[test]
     fn test_mixed() {
-        test!(
-            "../parser_tests/mixed.input.fusion",
-            "../parser_tests/mixed.ast.txt"
-        );
+        test!("../parser_tests/mixed.input.fusion", "../parser_tests/mixed.ast.txt");
     }
 
     #[test]
@@ -418,26 +401,17 @@ mod parser_tests {
 
     #[test]
     fn test_list() {
-        test!(
-            "../parser_tests/list.input.fusion",
-            "../parser_tests/list.ast.txt"
-        );
+        test!("../parser_tests/list.input.fusion", "../parser_tests/list.ast.txt");
     }
 
     #[test]
     fn test_real() {
-        test!(
-            "../parser_tests/real.input.fusion",
-            "../parser_tests/real.ast.txt"
-        );
+        test!("../parser_tests/real.input.fusion", "../parser_tests/real.ast.txt");
     }
 
     #[test]
     fn test_sexp() {
-        test!(
-            "../parser_tests/sexp.input.fusion",
-            "../parser_tests/sexp.ast.txt"
-        );
+        test!("../parser_tests/sexp.input.fusion", "../parser_tests/sexp.ast.txt");
     }
 
     #[test]
@@ -458,10 +432,7 @@ mod parser_tests {
 
     #[test]
     fn test_symbol() {
-        test!(
-            "../parser_tests/symbol.input.fusion",
-            "../parser_tests/symbol.ast.txt"
-        );
+        test!("../parser_tests/symbol.input.fusion", "../parser_tests/symbol.ast.txt");
     }
 
     #[test]

@@ -14,10 +14,7 @@ pub use fusion_loader::*;
 pub use module::*;
 pub use script::*;
 
-pub fn load_index(
-    fusion_config: &FusionConfig,
-    package_path: &Path,
-) -> Result<FusionIndexCell, Error> {
+pub fn load_index(fusion_config: &FusionConfig, package_path: &Path) -> Result<FusionIndexCell, Error> {
     let mut paths = Vec::new();
     let module_path = package_path.join("fusion/src");
     if module_path.exists() {
@@ -48,9 +45,7 @@ mod test {
         .unwrap();
 
         let fusion_loader = FusionLoader::new(&default_config, fusion_index.clone());
-        if let Err(err) =
-            fusion_loader.load_module_file("index_tests/bootstrap/test_files/some_mod.fusion")
-        {
+        if let Err(err) = fusion_loader.load_module_file("index_tests/bootstrap/test_files/some_mod.fusion") {
             panic!("\n{}", err);
         }
 

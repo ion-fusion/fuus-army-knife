@@ -4,9 +4,7 @@ use crate::ast::*;
 use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::file::{find_files, FusionFile};
-use crate::index::{
-    FusionIndexCell, Module, ModuleCell, Origin, RequireForm, RequireType, Script, ScriptCell,
-};
+use crate::index::{FusionIndexCell, Module, ModuleCell, Origin, RequireForm, RequireType, Script, ScriptCell};
 use crate::span::ShortSpan;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -67,11 +65,7 @@ impl<'i> FusionLoader<'i> {
         self.reload_module_file(module_name, file_path.as_ref())
     }
 
-    pub fn reload_module_file(
-        &self,
-        module_name: String,
-        file_path: &Path,
-    ) -> Result<ModuleCell, Error> {
+    pub fn reload_module_file(&self, module_name: String, file_path: &Path) -> Result<ModuleCell, Error> {
         let file = FusionFile::load(self.config, file_path)
             .map_err(|err| err_generic!("failed to load {:?}: {}", file_path, err))?;
 
@@ -87,16 +81,12 @@ impl<'i> FusionLoader<'i> {
             return Ok(self.index.borrow_mut().get_root_module());
         }
 
-        let module_file_name = self
-            .index
-            .borrow()
-            .find_module_file(module_name)
-            .ok_or_else(|| {
-                err_generic!(
-                    "cannot load module named {}: no module file found in module paths",
-                    module_name
-                )
-            })?;
+        let module_file_name = self.index.borrow().find_module_file(module_name).ok_or_else(|| {
+            err_generic!(
+                "cannot load module named {}: no module file found in module paths",
+                module_name
+            )
+        })?;
         self.load_module_file(module_file_name)
     }
 
@@ -173,12 +163,7 @@ impl<'i> FusionLoader<'i> {
         Ok(Module::new(module_name, language, file, requires, provides))
     }
 
-    fn visit_expr(
-        &self,
-        processed: &mut ProcessedFile,
-        expr: &Expr,
-        quoted: bool,
-    ) -> Result<(), Error> {
+    fn visit_expr(&self, processed: &mut ProcessedFile, expr: &Expr, quoted: bool) -> Result<(), Error> {
         use Expr::*;
         match expr {
             List(data) => {
@@ -194,18 +179,13 @@ impl<'i> FusionLoader<'i> {
                     self.visit_expr(processed, expr, quoted)?;
                 }
             }
-            Atomic(_) | Clob(_) | CommentBlock(_) | CommentLine(_) | MultilineString(_)
-            | Newlines(_) | StructKey(_) => {}
+            Atomic(_) | Clob(_) | CommentBlock(_) | CommentLine(_) | MultilineString(_) | Newlines(_)
+            | StructKey(_) => {}
         }
         Ok(())
     }
 
-    fn visit_sexpr(
-        &self,
-        processed: &mut ProcessedFile,
-        sexpr: &ListData,
-        quoted: bool,
-    ) -> Result<(), Error> {
+    fn visit_sexpr(&self, processed: &mut ProcessedFile, sexpr: &ListData, quoted: bool) -> Result<(), Error> {
         let mut items = sexpr.item_iter();
         if let Some(first_value) = items.next() {
             if let Some(function_call) = first_value.symbol_value() {
@@ -248,16 +228,10 @@ impl<'i> FusionLoader<'i> {
         span: ShortSpan,
         mut rest: impl Iterator<Item = &'i Expr>,
     ) -> Result<(), Error> {
-        let _module_name = rest
-            .next()
-            .ok_or_else(|| err_spanned!(span, "missing module name"))?;
+        let _module_name = rest.next().ok_or_else(|| err_spanned!(span, "missing module name"))?;
         let language = rest
             .next()
-            .and_then(|expr| {
-                expr.string_value()
-                    .map(|v| v.as_str())
-                    .or(expr.stripped_symbol_value())
-            })
+            .and_then(|expr| expr.string_value().map(|v| v.as_str()).or(expr.stripped_symbol_value()))
             .ok_or_else(|| err_spanned!(span, "missing module language"))?;
         processed.language = Some(language.to_string());
         self.load_module(language)?;
@@ -267,19 +241,13 @@ impl<'i> FusionLoader<'i> {
         Ok(())
     }
 
-    fn visit_require(
-        &self,
-        processed: &mut ProcessedFile,
-        rest: impl Iterator<Item = &'i Expr>,
-    ) -> Result<(), Error> {
+    fn visit_require(&self, processed: &mut ProcessedFile, rest: impl Iterator<Item = &'i Expr>) -> Result<(), Error> {
         for expr in rest {
             match expr {
                 Expr::Atomic(data) => match data.typ {
                     AtomicType::QuotedString => {
                         let module = self.load_module(&data.value)?;
-                        processed
-                            .requires
-                            .push(RequireForm::new(module, RequireType::All));
+                        processed.requires.push(RequireForm::new(module, RequireType::All));
                         Ok(())
                     }
                     _ => Err(err_spanned!(
@@ -297,11 +265,7 @@ impl<'i> FusionLoader<'i> {
         Ok(())
     }
 
-    fn visit_require_sexpr(
-        &self,
-        processed: &mut ProcessedFile,
-        sexpr: &ListData,
-    ) -> Result<(), Error> {
+    fn visit_require_sexpr(&self, processed: &mut ProcessedFile, sexpr: &ListData) -> Result<(), Error> {
         let mut items = sexpr.item_iter();
         if let Some(first_value) = items.next() {
             if let Some(function_call) = first_value.symbol_value() {
@@ -312,10 +276,7 @@ impl<'i> FusionLoader<'i> {
                         "support for `(require (prefix_in ...))` is not implemented"
                     )),
                     "rename_in" => self.visit_require_rename_in(processed, sexpr.span, items),
-                    _ => Err(err_spanned!(
-                        first_value.span(),
-                        "invalid argument to require"
-                    )),
+                    _ => Err(err_spanned!(first_value.span(), "invalid argument to require")),
                 };
             }
         }
@@ -340,9 +301,7 @@ impl<'i> FusionLoader<'i> {
                     let name = expr
                         .stripped_symbol_value()
                         .map(|name| name.to_string())
-                        .ok_or_else(|| {
-                            err_spanned!(expr.span(), "non-symbol found in require only_in list")
-                        });
+                        .ok_or_else(|| err_spanned!(expr.span(), "non-symbol found in require only_in list"));
                     name.map(|value| Origin::new(value, expr.span()))
                 })
                 .collect::<Result<Vec<Origin>, Error>>()?
@@ -395,11 +354,7 @@ impl<'i> FusionLoader<'i> {
         Ok(())
     }
 
-    fn visit_provide(
-        &self,
-        processed: &mut ProcessedFile,
-        rest: impl Iterator<Item = &'i Expr>,
-    ) -> Result<(), Error> {
+    fn visit_provide(&self, processed: &mut ProcessedFile, rest: impl Iterator<Item = &'i Expr>) -> Result<(), Error> {
         for provided in rest {
             if let Some(name) = provided.stripped_symbol_value() {
                 processed.provides.insert(name.into(), provided.span());
@@ -411,21 +366,11 @@ impl<'i> FusionLoader<'i> {
                             "all_defined_out" => {
                                 processed.all_defined_out = true;
                             }
-                            "rename_out" => {
-                                self.visit_rename_out(processed, first_value.span(), items)?
-                            }
-                            _ => {
-                                return Err(err_spanned!(
-                                    provided.span(),
-                                    "expected all_defined_out or rename_out"
-                                ))
-                            }
+                            "rename_out" => self.visit_rename_out(processed, first_value.span(), items)?,
+                            _ => return Err(err_spanned!(provided.span(), "expected all_defined_out or rename_out")),
                         }
                     } else {
-                        return Err(err_spanned!(
-                            provided.span(),
-                            "expected all_defined_out or rename_out"
-                        ));
+                        return Err(err_spanned!(provided.span(), "expected all_defined_out or rename_out"));
                     }
                 } else {
                     return Err(err_spanned!(provided.span(), "unexpected s-expression"));
@@ -450,9 +395,7 @@ impl<'i> FusionLoader<'i> {
             let provided_name = inner_itr
                 .next()
                 .and_then(|expr| expr.symbol_value())
-                .ok_or_else(|| {
-                    err_spanned!(rename_out_span, "rename_out requires a provided name")
-                })?;
+                .ok_or_else(|| err_spanned!(rename_out_span, "rename_out requires a provided name"))?;
 
             if let Some(defined) = processed.defined.get(local_name) {
                 processed.provides.insert(provided_name.into(), *defined);
@@ -469,10 +412,7 @@ impl<'i> FusionLoader<'i> {
             }
             Ok(())
         } else {
-            Err(err_spanned!(
-                rename_out_span,
-                "rename_out expected s-expression"
-            ))
+            Err(err_spanned!(rename_out_span, "rename_out expected s-expression"))
         }
     }
 
@@ -524,11 +464,7 @@ impl<'i> FusionLoader<'i> {
         }
         Ok(())
     }
-    fn visit_unquote(
-        &self,
-        processed: &mut ProcessedFile,
-        rest: impl Iterator<Item = &'i Expr>,
-    ) -> Result<(), Error> {
+    fn visit_unquote(&self, processed: &mut ProcessedFile, rest: impl Iterator<Item = &'i Expr>) -> Result<(), Error> {
         for item in rest {
             self.visit_expr(processed, item, false)?;
         }
@@ -557,12 +493,8 @@ impl ProcessedFile {
 
     fn dissolve(mut self) -> (String, Vec<RequireForm>, BTreeMap<String, ShortSpan>) {
         if self.all_defined_out {
-            self.provides.extend(self.defined.into_iter());
+            self.provides.extend(self.defined);
         }
-        (
-            self.language.unwrap_or("".into()),
-            self.requires,
-            self.provides,
-        )
+        (self.language.unwrap_or("".into()), self.requires, self.provides)
     }
 }

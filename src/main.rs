@@ -42,14 +42,12 @@ fn main() {
     let config_file_name = app_matches.value_of("config");
 
     if app_matches.subcommand_matches("format-server").is_some() {
-        let fusion_config =
-            load_config(config_file_name, true).unwrap_or_else(|error| bail!("{}", error));
+        let fusion_config = load_config(config_file_name, true).unwrap_or_else(|error| bail!("{}", error));
         subcommand_format_server(&fusion_config);
         return;
     }
 
-    let fusion_config =
-        load_config(config_file_name, false).unwrap_or_else(|error| bail!("{}", error));
+    let fusion_config = load_config(config_file_name, false).unwrap_or_else(|error| bail!("{}", error));
 
     if let Some(matches) = app_matches.subcommand_matches("debug-parser") {
         let path = matches.value_of("FILE").unwrap();
@@ -61,10 +59,7 @@ fn main() {
         subcommand_format(&fusion_config, path);
     } else if app_matches.subcommand_matches("format-all").is_some() {
         subcommand_format_all(&fusion_config);
-    } else if app_matches
-        .subcommand_matches("check-correctness-watch")
-        .is_some()
-    {
+    } else if app_matches.subcommand_matches("check-correctness-watch").is_some() {
         subcommand_check_correctness_watch(&fusion_config);
     } else if app_matches.subcommand_matches("checkstyle-all").is_some() {
         subcommand_checkstyle_all(&fusion_config);
@@ -139,8 +134,8 @@ fn subcommand_debug_parser(fusion_config: &FusionConfig, path: &str) {
 }
 
 fn subcommand_debug_index(fusion_config: &FusionConfig) -> Result<(), Error> {
-    let current_package_path = env::current_dir()
-        .map_err(|err| err_generic!("failed to determine current working directory: {}", err))?;
+    let current_package_path =
+        env::current_dir().map_err(|err| err_generic!("failed to determine current working directory: {}", err))?;
     let fusion_index = index::load_index(fusion_config, &current_package_path)?;
     println!("Index:\n{:#?}", fusion_index.borrow());
     Ok(())
@@ -156,10 +151,9 @@ fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) 
 
     // Write formatted to a temp file
     let temp_file_path = fusion_file.file_name.with_extension("tmp-fuusak");
-    let mut temp_file = File::create(&temp_file_path)
-        .unwrap_or_else(|err| bail!("Failed to create temp file: {}", err));
-    write!(temp_file, "{}", formatted)
-        .unwrap_or_else(|err| bail!("Failed to write to temp file: {}", err));
+    let mut temp_file =
+        File::create(&temp_file_path).unwrap_or_else(|err| bail!("Failed to create temp file: {}", err));
+    write!(temp_file, "{}", formatted).unwrap_or_else(|err| bail!("Failed to write to temp file: {}", err));
 
     // Replace original file with temp file via rename
     fs::rename(&temp_file_path, &fusion_file.file_name).unwrap_or_else(|err| {
@@ -190,15 +184,13 @@ fn checkstyle(fusion_config: &FusionConfig, file: &FusionFile) -> bool {
 
 fn subcommand_format(fusion_config: &FusionConfig, path: &str) {
     let file_content = FusionFileContent::load(path).unwrap_or_else(|err| bail!("{}", err));
-    let file = file_content
-        .parse(fusion_config)
-        .unwrap_or_else(|err| bail!("{}", err));
+    let file = file_content.parse(fusion_config).unwrap_or_else(|err| bail!("{}", err));
     format_file_in_place(fusion_config, &file);
 }
 
 fn subcommand_format_all(fusion_config: &FusionConfig) {
-    let fusion_files = FusionFile::recursively_load_directory(fusion_config, "./")
-        .unwrap_or_else(|err| bail!("{}", err));
+    let fusion_files =
+        FusionFile::recursively_load_directory(fusion_config, "./").unwrap_or_else(|err| bail!("{}", err));
     for file in &fusion_files {
         println!("Formatting {:?}...", file.file_name);
         format_file_in_place(fusion_config, file);
@@ -206,14 +198,12 @@ fn subcommand_format_all(fusion_config: &FusionConfig) {
 }
 
 fn subcommand_check_correctness_watch(fusion_config: &FusionConfig) {
-    while check::check_correctness_watch(fusion_config)
-        .unwrap_or_else(|err| bail!("Failed: {}", err))
-    {}
+    while check::check_correctness_watch(fusion_config).unwrap_or_else(|err| bail!("Failed: {}", err)) {}
 }
 
 fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
-    let fusion_files = FusionFile::recursively_load_directory(fusion_config, "./")
-        .unwrap_or_else(|err| bail!("{}", err));
+    let fusion_files =
+        FusionFile::recursively_load_directory(fusion_config, "./").unwrap_or_else(|err| bail!("{}", err));
     let mut passed = true;
     for file in &fusion_files {
         if !checkstyle(fusion_config, file) {
@@ -238,9 +228,7 @@ fn subcommand_checkstyle(fusion_config: &FusionConfig, path: &str) {
 
 fn subcommand_format_server(fusion_config: &FusionConfig) {
     let file_content = FusionFileContent::load_stdin().unwrap_or_else(|err| bail!("{}", err));
-    let file = file_content
-        .parse(fusion_config)
-        .unwrap_or_else(|err| bail!("{}", err));
+    let file = file_content.parse(fusion_config).unwrap_or_else(|err| bail!("{}", err));
     let formatted = format::format(fusion_config, &file.ast);
     print!("{}", formatted)
 }

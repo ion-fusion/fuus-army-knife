@@ -25,10 +25,7 @@ impl FusionFile {
         }
     }
 
-    pub fn load<P: AsRef<Path>>(
-        fusion_config: &FusionConfig,
-        path: P,
-    ) -> Result<FusionFile, Error> {
+    pub fn load<P: AsRef<Path>>(fusion_config: &FusionConfig, path: P) -> Result<FusionFile, Error> {
         FusionFileContent::load(path)?.parse(fusion_config)
     }
 
@@ -39,11 +36,8 @@ impl FusionFile {
         let fusion_file_paths = find_files(path, ".fusion")?;
         let mut fusion_files = Vec::new();
         for fusion_file_path in &fusion_file_paths {
-            let contents =
-                FusionFileContent::load(fusion_file_path).map_err(|err| err_generic!("{}", err))?;
-            let fusion_file = contents
-                .parse(fusion_config)
-                .map_err(|err| err_generic!("{}", err))?;
+            let contents = FusionFileContent::load(fusion_file_path).map_err(|err| err_generic!("{}", err))?;
+            let fusion_file = contents.parse(fusion_config).map_err(|err| err_generic!("{}", err))?;
             fusion_files.push(fusion_file);
         }
         Ok(fusion_files)
@@ -65,14 +59,8 @@ pub fn find_files<P: AsRef<Path>>(path: P, desired_extension: &str) -> Result<Ve
     for entry in directory_walker {
         let entry = entry.map_err(|err| err_generic!("Failed to read input file: {}", err))?;
         let path = entry.path();
-        if !entry
-            .file_type()
-            .map(|file_type| file_type.is_dir())
-            .unwrap_or(true)
-            && path
-                .as_os_str()
-                .to_string_lossy()
-                .ends_with(desired_extension)
+        if !entry.file_type().map(|file_type| file_type.is_dir()).unwrap_or(true)
+            && path.as_os_str().to_string_lossy().ends_with(desired_extension)
         {
             fusion_files.push(path.into());
         }
@@ -113,9 +101,8 @@ impl FusionFileContent {
     pub fn load<P: AsRef<Path>>(path: P) -> Result<FusionFileContent, Error> {
         Ok(FusionFileContent::new(
             path.as_ref().to_path_buf(),
-            read_to_string(path.as_ref()).map_err(|err| {
-                err_generic!("Failed to load file {}: {}", path.as_ref().display(), err)
-            })?,
+            read_to_string(path.as_ref())
+                .map_err(|err| err_generic!("Failed to load file {}: {}", path.as_ref().display(), err))?,
         ))
     }
     pub fn load_stdin() -> Result<FusionFileContent, Error> {

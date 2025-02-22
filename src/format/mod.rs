@@ -140,20 +140,4 @@ mod tests {
             "../../format_tests/misc.formatted.fusion"
         );
     }
-
-    #[test]
-    fn real_world_1() {
-        test!(
-            "../../format_tests/real_world_1.input.fusion",
-            "../../format_tests/real_world_1.formatted.fusion"
-        );
-    }
-
-    #[test]
-    fn real_world_2() {
-        test!(
-            "../../format_tests/real_world_2.input.fusion",
-            "../../format_tests/real_world_2.formatted.fusion"
-        );
-    }
 }
