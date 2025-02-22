@@ -105,9 +105,7 @@ impl ListData {
     }
 
     pub fn item_iter(&self) -> impl Iterator<Item = &'_ Expr> {
-        self.items
-            .iter()
-            .filter(|expr| (*expr).is_not_comment_or_newlines())
+        self.items.iter().filter(|expr| (*expr).is_not_comment_or_newlines())
     }
 }
 
@@ -155,10 +153,12 @@ pub enum Expr {
     List(ListData),
     MultilineString(MultilineStringData),
     Newlines(NewlinesData),
+    #[allow(clippy::enum_variant_names)]
     SExpr(ListData),
     Struct(ListData),
     StructKey(NonAnnotatedStringData),
 }
+#[allow(dead_code)]
 impl Expr {
     pub fn is_newlines(&self) -> bool {
         matches!(*self, Expr::Newlines(_))

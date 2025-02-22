@@ -119,10 +119,7 @@ fn test_trim_indent() {
     assert_eq!("foo\nbar", &trim_indent(" foo\n bar"));
     assert_eq!("foo\nbar", &trim_indent("  foo\n  bar"));
     assert_eq!("foo\n bar", &trim_indent(" foo\n  bar"));
-    assert_eq!(
-        "\nfoo\n  bar\nbaz\n",
-        &trim_indent("\n  foo\n    bar\n  baz\n")
-    );
+    assert_eq!("\nfoo\n  bar\nbaz\n", &trim_indent("\n  foo\n    bar\n  baz\n"));
 }
 
 pub fn format_indented_multiline(value: &str, continuation_indent: usize) -> String {
@@ -148,10 +145,7 @@ pub fn format_indented_multiline(value: &str, continuation_indent: usize) -> Str
 fn test_format_indented_multiline() {
     assert_eq!("foo", &format_indented_multiline("foo", 3));
     assert_eq!("foo\n   bar", &format_indented_multiline("foo\nbar", 3));
-    assert_eq!(
-        "foo\n\n\n   bar",
-        &format_indented_multiline("foo\n\n\nbar", 3)
-    );
+    assert_eq!("foo\n\n\n   bar", &format_indented_multiline("foo\n\n\nbar", 3));
     assert_eq!(
         "foo\n   bar\n     baz\n   bin",
         &format_indented_multiline("foo\nbar\n  baz\nbin", 3)

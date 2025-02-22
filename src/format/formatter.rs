@@ -3,8 +3,8 @@
 use crate::ast::*;
 use crate::config::FusionConfig;
 use crate::string_util::{
-    already_has_whitespace_before_cursor, find_cursor_pos, format_indented_multiline,
-    last_is_one_of, repeat, trim_indent,
+    already_has_whitespace_before_cursor, find_cursor_pos, format_indented_multiline, last_is_one_of, repeat,
+    trim_indent,
 };
 
 pub struct Formatter<'i> {
@@ -138,8 +138,7 @@ impl<'i> Formatter<'i> {
         } else {
             data.value.clone()
         };
-        self.output
-            .push_str(value.trim_end_matches(|c| c == ' ' || c == '\t'));
+        self.output.push_str(value.trim_end_matches([' ', '\t']));
         if last_is_one_of(&self.output, &['\n']) {
             self.output.push_str(&repeat(' ', continuation_indent));
         }
@@ -147,8 +146,7 @@ impl<'i> Formatter<'i> {
     }
 
     fn visit_newlines(&mut self, data: &NewlinesData, next_indent: usize) {
-        self.output
-            .push_str(&newline(data.newline_count as usize, next_indent));
+        self.output.push_str(&newline(data.newline_count as usize, next_indent));
     }
 
     // Complicated logic for determining whitespace between s-expression members due to
@@ -186,8 +184,7 @@ impl<'i> Formatter<'i> {
 
         let bound = self.bind_whitespace(&data.items);
         if !bound.is_empty() {
-            let continuation_indent =
-                calculate_continuation_indent(self.config, &data.items, opening_indent);
+            let continuation_indent = calculate_continuation_indent(self.config, &data.items, opening_indent);
             for (item, add_space) in bound {
                 self.visit_expr(item, continuation_indent);
                 if add_space {
@@ -301,11 +298,7 @@ enum IndentType {
     Undetermined,
 }
 
-fn calculate_continuation_indent(
-    config: &FusionConfig,
-    exprs: &[Expr],
-    next_indent: usize,
-) -> usize {
+fn calculate_continuation_indent(config: &FusionConfig, exprs: &[Expr], next_indent: usize) -> usize {
     // Figure out what indentation would be without any config
     let mut indent_type = match exprs.count_items_before_newline() {
         0 => IndentType::EndOfOpening,
@@ -313,7 +306,7 @@ fn calculate_continuation_indent(
         _ => IndentType::Undetermined,
     };
 
-    if let Some(first) = exprs.get(0) {
+    if let Some(first) = exprs.first() {
         // If the first value is a symbol, then try to
         // override determined indentation with config
         if first.is_symbol() {

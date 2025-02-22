@@ -37,12 +37,8 @@ impl FusionConfig {
             format_multiline_string_contents: toml
                 .format_multiline_string_contents
                 .unwrap_or(defaults.format_multiline_string_contents),
-            fixed_indent_symbols: toml
-                .fixed_indent_symbols
-                .unwrap_or(defaults.fixed_indent_symbols),
-            smart_indent_symbols: toml
-                .smart_indent_symbols
-                .unwrap_or(defaults.smart_indent_symbols),
+            fixed_indent_symbols: toml.fixed_indent_symbols.unwrap_or(defaults.fixed_indent_symbols),
+            smart_indent_symbols: toml.smart_indent_symbols.unwrap_or(defaults.smart_indent_symbols),
         }
     }
 }
@@ -85,10 +81,7 @@ pub fn load_config(config_file_name: Option<&str>, silent: bool) -> Result<Fusio
         Some(path) => {
             let given = PathBuf::from(path);
             if !given.exists() {
-                return Err(err_generic!(
-                    "specified config file {:?} doesn't exist",
-                    given
-                ));
+                return Err(err_generic!("specified config file {:?} doesn't exist", given));
             }
             given
         }
@@ -105,26 +98,16 @@ pub fn load_config(config_file_name: Option<&str>, silent: bool) -> Result<Fusio
         println!("Using config file {:?}...", config_path);
     }
 
-    let config_contents = std::fs::read_to_string(&config_path).map_err(|err| {
-        err_generic!("Failed to read config file {:?}: {}", config_file_name, err)
-    })?;
-    let config = config_contents.parse::<Value>().map_err(|err| {
-        err_generic!(
-            "Failed to parse config file: {:?}: {}",
-            config_file_name,
-            err
-        )
-    })?;
+    let config_contents = std::fs::read_to_string(&config_path)
+        .map_err(|err| err_generic!("Failed to read config file {:?}: {}", config_file_name, err))?;
+    let config = config_contents
+        .parse::<Value>()
+        .map_err(|err| err_generic!("Failed to parse config file: {:?}: {}", config_file_name, err))?;
 
     let config = FusionConfig::from_toml_with_defaults(
         config
             .get("fusion")
-            .ok_or_else(|| {
-                err_generic!(
-                    "Missing config 'fusion' top-level in {:?}",
-                    config_file_name
-                )
-            })?
+            .ok_or_else(|| err_generic!("Missing config 'fusion' top-level in {:?}", config_file_name))?
             .clone()
             .try_into::<TomlFusionConfig>()
             .map_err(|err| {

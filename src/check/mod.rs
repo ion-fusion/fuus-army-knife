@@ -16,8 +16,8 @@ use std::time::Duration;
 
 pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Error> {
     // Start by indexing the entire package
-    let current_package_path = env::current_dir()
-        .map_err(|err| err_generic!("failed to determine current working directory: {}", err))?;
+    let current_package_path =
+        env::current_dir().map_err(|err| err_generic!("failed to determine current working directory: {}", err))?;
     let fusion_index = index::load_index(fusion_config, &current_package_path)?;
 
     // Now set up a file watcher on the directories relevant to this package
@@ -25,8 +25,8 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
     let file_references = build_references(&current_package_path, &fusion_index, &watch_paths);
 
     let (tx, rx) = channel();
-    let mut watcher = watcher(tx, Duration::from_millis(50))
-        .map_err(|err| err_generic!("Failed to create file watch: {}", err))?;
+    let mut watcher =
+        watcher(tx, Duration::from_millis(50)).map_err(|err| err_generic!("Failed to create file watch: {}", err))?;
     for path in &watch_paths {
         watch_path(&mut watcher, path)?;
     }
@@ -41,16 +41,12 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
                     let fusion_loader = FusionLoader::new(fusion_config, fusion_index.clone());
                     match reference {
                         // If it's a module file, reload it
-                        Reference::Module(name) => {
-                            match fusion_loader.reload_module_file(name.into(), &path) {
-                                Ok(_) => youre_awesome(),
-                                Err(err) => error_occurred(&current_package_path, &path, err),
-                            }
-                        }
+                        Reference::Module(name) => match fusion_loader.reload_module_file(name.into(), &path) {
+                            Ok(_) => youre_awesome(),
+                            Err(err) => error_occurred(&current_package_path, &path, err),
+                        },
                         // If it's referenced by a bunch of scripts, reload all of them
-                        Reference::Scripts(names) => {
-                            reload_scripts(&fusion_index, &fusion_loader, names)
-                        }
+                        Reference::Scripts(names) => reload_scripts(&fusion_index, &fusion_loader, names),
                     }
                 } else {
                     println!("Ignoring change to {:?}", path);
@@ -65,21 +61,12 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
                 return Ok(true);
             }
             Ok(_) => {}
-            Err(err) => {
-                return Err(err_generic!(
-                    "Failed to listen on file system notifications: {}",
-                    err
-                ))
-            }
+            Err(err) => return Err(err_generic!("Failed to listen on file system notifications: {}", err)),
         }
     }
 }
 
-fn reload_scripts(
-    fusion_index: &FusionIndexCell,
-    fusion_loader: &FusionLoader<'_>,
-    names: &HashSet<String>,
-) {
+fn reload_scripts(fusion_index: &FusionIndexCell, fusion_loader: &FusionLoader<'_>, names: &HashSet<String>) {
     let mut success = true;
     for script_name in names.iter() {
         let (modules, globals, file_names) = {
@@ -137,27 +124,19 @@ fn youre_awesome() {
         use colorful::HSL;
         println!(
             "{}",
-            format!("\n{}", message)
-                .gradient_with_color(HSL::new(0.0, 1.0, 0.5), HSL::new(0.833, 1.0, 0.5))
+            format!("\n{}", message).gradient_with_color(HSL::new(0.0, 1.0, 0.5), HSL::new(0.833, 1.0, 0.5))
         );
     }
 }
 
 fn error_occurred(package_path: &Path, path: &Path, err: Error) {
     let relative = path.strip_prefix(package_path).unwrap();
-    println!(
-        "{}\n{}\n",
-        format!("\nError in {:?}:", relative).color(Color::Red),
-        err
-    );
+    println!("{}\n{}\n", format!("\nError in {:?}:", relative).color(Color::Red), err);
 }
 
 fn build_watch_paths(package_path: &Path, _config: &FusionConfig) -> Vec<PathBuf> {
     let paths = vec!["fusion/src", "ftst"];
-    paths
-        .into_iter()
-        .map(|path| package_path.join(path))
-        .collect()
+    paths.into_iter().map(|path| package_path.join(path)).collect()
 }
 
 #[derive(Debug)]
@@ -176,10 +155,7 @@ fn build_references(
     for module in fusion_index.borrow().module_iter() {
         let module = module.borrow();
         let file_name = package_path.join(&module.file.file_name);
-        if watch_paths
-            .iter()
-            .any(|path| file_name.strip_prefix(path).is_ok())
-        {
+        if watch_paths.iter().any(|path| file_name.strip_prefix(path).is_ok()) {
             assert!(!references.contains_key(&file_name));
             references.insert(file_name, Reference::Module(module.name.clone()));
         }
@@ -188,10 +164,7 @@ fn build_references(
         let script = script.borrow();
         for file in &script.files {
             let file_name = package_path.join(&file.file_name);
-            if watch_paths
-                .iter()
-                .any(|path| file_name.strip_prefix(path).is_ok())
-            {
+            if watch_paths.iter().any(|path| file_name.strip_prefix(path).is_ok()) {
                 match references.entry(file_name) {
                     Entry::Vacant(entry) => {
                         let mut names = HashSet::new();
