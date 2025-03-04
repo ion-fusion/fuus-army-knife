@@ -3,7 +3,7 @@ name: PR Verification
 on:
   pull_request:
     branches:
-      - "mainline"
+      - "main"
     paths-ignore:
       - "**.md"
 
