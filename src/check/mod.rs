@@ -6,7 +6,7 @@ use crate::index::{self, FusionIndexCell, FusionLoader};
 use colorful::{Color, Colorful};
 use notify::DebouncedEvent::{Remove, Rename, Write};
 use notify::{watcher, RecommendedWatcher, RecursiveMode, Watcher};
-use rand::random;
+use rand::distr::{Distribution, Uniform};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -110,15 +110,16 @@ const AWESOME_MESSAGES: &[&str] = &[
     "Neat.",
     "BOOM!",
     "Zoomies.",
-    "Time for CR, right?",
+    "Time for PR, right?",
     "<3",
 ];
 
 fn youre_awesome() {
-    let rindex: usize = random();
-    let num: u8 = random();
-    let message = AWESOME_MESSAGES[rindex % AWESOME_MESSAGES.len()];
-    if message.len() < 15 || num > 32 {
+    let rindex: usize = Uniform::new(0, AWESOME_MESSAGES.len())
+        .map(|dist| dist.sample(&mut rand::rng()))
+        .unwrap_or_default();
+    let message = AWESOME_MESSAGES[rindex];
+    if message.len() < 15 {
         println!("{}", format!("\n{}", message).color(Color::Blue));
     } else {
         use colorful::HSL;
