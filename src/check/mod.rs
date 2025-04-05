@@ -4,11 +4,16 @@ use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::index::{self, FusionIndexCell, FusionLoader};
 use colorful::{Color, Colorful};
-use notify::DebouncedEvent::{Remove, Rename, Write};
-use notify::{watcher, RecommendedWatcher, RecursiveMode, Watcher};
+use notify_debouncer_full::{
+    new_debouncer,
+    notify::{
+        event::{DataChange, ModifyKind},
+        EventKind, RecursiveMode, Watcher,
+    },
+    Debouncer, FileIdCache,
+};
 use rand::distr::{Distribution, Uniform};
-use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::{hash_map::Entry, HashMap, HashSet};
 use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
@@ -25,43 +30,62 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
     let file_references = build_references(&current_package_path, &fusion_index, &watch_paths);
 
     let (tx, rx) = channel();
-    let mut watcher =
-        watcher(tx, Duration::from_millis(50)).map_err(|err| err_generic!("Failed to create file watch: {}", err))?;
+    let mut debouncer = new_debouncer(Duration::from_millis(50), None, tx)
+        .map_err(|err| err_generic!("Failed to create file watch: {}", err))?;
+
     for path in &watch_paths {
-        watch_path(&mut watcher, path)?;
+        watch_path(&mut debouncer, path)?;
     }
 
     // Watch for file system changes
     println!("Successfully indexed all resources used by this package. Watching for filesystem changes now...\n");
     loop {
-        match rx.recv() {
-            Ok(Write(path)) => {
-                // If the file is referenced by the index and is relevant to this package
-                if let Some(reference) = file_references.get(&path) {
-                    let fusion_loader = FusionLoader::new(fusion_config, fusion_index.clone());
-                    match reference {
-                        // If it's a module file, reload it
-                        Reference::Module(name) => match fusion_loader.reload_module_file(name.into(), &path) {
-                            Ok(_) => youre_awesome(),
-                            Err(err) => error_occurred(&current_package_path, &path, err),
-                        },
-                        // If it's referenced by a bunch of scripts, reload all of them
-                        Reference::Scripts(names) => reload_scripts(&fusion_index, &fusion_loader, names),
+        match rx
+            .recv()
+            .map_err(|err| err_generic!("Failed to listen on file system notifications: {}", err))?
+        {
+            Ok(events) => {
+                for event in events {
+                    match event.kind {
+                        EventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
+                            let path = event.paths.first().expect("a changed file path to be present");
+
+                            // If the file is referenced by the index and is relevant to this package
+                            if let Some(reference) = file_references.get(path) {
+                                let fusion_loader = FusionLoader::new(fusion_config, fusion_index.clone());
+                                match reference {
+                                    // If it's a module file, reload it
+                                    Reference::Module(name) => {
+                                        match fusion_loader.reload_module_file(name.into(), path) {
+                                            Ok(_) => youre_awesome(),
+                                            Err(err) => error_occurred(&current_package_path, path, err),
+                                        }
+                                    }
+                                    // If it's referenced by a bunch of scripts, reload all of them
+                                    Reference::Scripts(names) => reload_scripts(&fusion_index, &fusion_loader, names),
+                                }
+                            } else {
+                                println!("Ignoring change to {:?}", path);
+                            }
+                        }
+                        EventKind::Modify(ModifyKind::Name(_)) => {
+                            println!("Proper handling of file renames is unimplemented. Restarting check-correctness-watch...");
+                            return Ok(true);
+                        }
+                        EventKind::Remove(_) => {
+                            println!("Proper handling of file deletions is unimplemented. Restarting check-correctness-watch...");
+                            return Ok(true);
+                        }
+                        _ => {}
                     }
-                } else {
-                    println!("Ignoring change to {:?}", path);
                 }
             }
-            Ok(Remove(_path)) => {
-                println!("Proper handling of file deletions is unimplemented. Restarting check-correctness-watch...");
-                return Ok(true);
+            Err(errors) => {
+                return Err(err_generic!(
+                    "Unexpected error(s) encountered while listening on file system notifications:\n\t{:?}",
+                    errors
+                ))
             }
-            Ok(Rename(_old_name, _new_name)) => {
-                println!("Proper handling of file renames is unimplemented. Restarting check-correctness-watch...");
-                return Ok(true);
-            }
-            Ok(_) => {}
-            Err(err) => return Err(err_generic!("Failed to listen on file system notifications: {}", err)),
         }
     }
 }
@@ -185,8 +209,8 @@ fn build_references(
     references
 }
 
-fn watch_path(watcher: &mut RecommendedWatcher, path: &Path) -> Result<(), Error> {
-    watcher
+fn watch_path<T: Watcher, C: FileIdCache>(debouncer: &mut Debouncer<T, C>, path: &Path) -> Result<(), Error> {
+    debouncer
         .watch(path, RecursiveMode::Recursive)
         .map_err(|err| err_generic!("Failed to watch {:?}: {}", path, err))
 }
