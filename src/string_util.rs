@@ -38,8 +38,8 @@ fn test_find_cursor_pos() {
 
 pub fn already_has_whitespace_before_cursor(value: &str) -> bool {
     let value = value.as_bytes();
-    let index = (value.len() as isize) - 1;
-    index > 0 && (value[index as usize] == b' ' || value[index as usize] == b'\n')
+    let index = value.len().cast_signed() - 1;
+    index > 0 && (value[index.cast_unsigned()] == b' ' || value[index.cast_unsigned()] == b'\n')
 }
 
 #[cfg(test)]
