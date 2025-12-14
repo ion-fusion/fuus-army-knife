@@ -1,11 +1,15 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use crate::ast::*;
+use crate::ast::{
+    AtomicData, AtomicType, ClobData, ClobExpr, CountItemsBeforeNewline, CountNewlines, Expr, ListData,
+    MultilineStringData, NewlinesData, NonAnnotatedStringData, NonAnnotatedStringListData,
+};
 use crate::config::FusionConfig;
 use crate::string_util::{
     already_has_whitespace_before_cursor, find_cursor_pos, format_indented_multiline, last_is_one_of, repeat,
     trim_indent,
 };
+use std::fmt::Write;
 
 pub struct Formatter<'i> {
     config: &'i FusionConfig,
@@ -26,7 +30,7 @@ impl<'i> Formatter<'i> {
     pub fn finish(self) -> String {
         self.output
             .lines()
-            .map(|line| line.trim_end())
+            .map(str::trim_end)
             .fold(String::new(), |l, r| l + r + "\n")
     }
 
@@ -60,9 +64,9 @@ impl<'i> Formatter<'i> {
     fn visit_atomic(&mut self, data: &AtomicData) {
         self.visit_annotations(&data.annotations);
         match data.typ {
-            AtomicType::QuotedString => self.output.push_str(&format!("\"{}\"", data.value)),
+            AtomicType::QuotedString => write!(self.output, "\"{}\"", data.value).expect("output is a string"),
             _ => self.output.push_str(&data.value),
-        };
+        }
     }
 
     fn visit_clob(&mut self, data: &ClobData, next_indent: usize) {
@@ -151,8 +155,8 @@ impl<'i> Formatter<'i> {
 
     // Complicated logic for determining whitespace between s-expression members due to
     // the inconsistent formatting of `|` lambda argument lists
-    fn bind_whitespace<'a>(&self, exprs: &'a [Expr]) -> Vec<(&'a Expr, bool)> {
-        let is_arg_symbol = |expr: &Expr| expr.symbol_value().map(|v| v == "|").unwrap_or(false);
+    fn bind_whitespace(exprs: &[Expr]) -> Vec<(&Expr, bool)> {
+        let is_arg_symbol = |expr: &Expr| expr.symbol_value().is_some_and(|v| v == "|");
 
         let mut bound = Vec::new();
         let mut first_is_arg_list = false;
@@ -182,7 +186,7 @@ impl<'i> Formatter<'i> {
         let opening_indent = find_cursor_pos(&self.output);
         self.output.push('(');
 
-        let bound = self.bind_whitespace(&data.items);
+        let bound = Formatter::bind_whitespace(&data.items);
         if !bound.is_empty() {
             let continuation_indent = calculate_continuation_indent(self.config, &data.items, opening_indent);
             for (item, add_space) in bound {
@@ -211,7 +215,7 @@ impl<'i> Formatter<'i> {
                 } else {
                     self.visit_expr(item, continuation_indent);
                 }
-                if item.is_value() && data.items[(i + 1)..].iter().any(|item| item.is_value()) {
+                if item.is_value() && data.items[(i + 1)..].iter().any(Expr::is_value) {
                     self.output.push(',');
                 }
             }
@@ -258,7 +262,7 @@ impl<'i> Formatter<'i> {
                     self.output.push(' ');
                 }
                 self.visit_expr(value, 0);
-                if value.is_value() && data.items[(i + 1)..].iter().any(|item| item.is_value()) {
+                if value.is_value() && data.items[(i + 1)..].iter().any(Expr::is_value) {
                     self.output.push(',');
                 }
             }

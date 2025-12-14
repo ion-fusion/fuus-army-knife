@@ -1,13 +1,13 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use crate::ast::*;
+use crate::ast::{CountUntilPred, Expr, NewlinesData};
 
 pub fn fixup_ast(ast: &[Expr]) -> Vec<Expr> {
     ast.iter().cloned().map(fixup_expr).collect()
 }
 
 fn fixup_expr(mut expr: Expr) -> Expr {
-    use Expr::*;
+    use Expr::{List, SExpr, Struct};
 
     expr = clear_empty(expr);
     match expr {
@@ -37,11 +37,11 @@ fn fixup_expr(mut expr: Expr) -> Expr {
 }
 
 fn clear_empty(mut expr: Expr) -> Expr {
-    use Expr::*;
+    use Expr::{List, SExpr, Struct};
 
     match expr {
         SExpr(ref mut data) | List(ref mut data) | Struct(ref mut data) => {
-            if data.items.iter().all(|item| item.is_newlines()) {
+            if data.items.iter().all(Expr::is_newlines) {
                 data.items.clear();
             }
         }
@@ -51,8 +51,8 @@ fn clear_empty(mut expr: Expr) -> Expr {
 }
 
 fn fixup_list(items: &mut Vec<Expr>) -> bool {
-    let has_values = items.iter().any(|item| item.is_not_comment_or_newlines());
-    let things_before_newline = (&items[..]).count_until(|e| !e.is_newlines(), |e| e.is_newlines());
+    let has_values = items.iter().any(Expr::is_not_comment_or_newlines);
+    let things_before_newline = (&items[..]).count_until(|e| !e.is_newlines(), Expr::is_newlines);
     let should_add_preceding_newline = has_values && things_before_newline == 0;
 
     // Remove the very first newlines instance

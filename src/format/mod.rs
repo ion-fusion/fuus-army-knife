@@ -8,7 +8,7 @@ use crate::ast::Expr;
 use crate::config::FusionConfig;
 use crate::format::formatter::Formatter;
 
-/// Formats the given AST into a String using the provided FusionConfig
+/// Formats the given AST into a String using the provided `FusionConfig`
 pub fn format(fusion_config: &FusionConfig, ast: &Vec<Expr>) -> String {
     let mut formatter = Formatter::new(fusion_config);
     if fusion_config.newline_fix_up_mode() {
