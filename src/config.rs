@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::error::Error;
 use std::path::PathBuf;
-use toml::Value;
 
 const NEWLINE_MODE_NO_CHANGE: &str = "no-change";
 const NEWLINE_MODE_FIX_UP: &str = "fix-up";
@@ -22,25 +21,32 @@ pub struct FusionConfig {
 }
 
 impl FusionConfig {
-    fn from_default_toml(toml: TomlFusionConfig) -> FusionConfig {
+    fn from_default_toml(toml: TomlFusionFile) -> FusionConfig {
+        let fusion = toml.fusion;
         FusionConfig {
-            newline_mode: toml.newline_mode.unwrap(),
-            format_multiline_string_contents: toml.format_multiline_string_contents.unwrap(),
-            fixed_indent_symbols: toml.fixed_indent_symbols.unwrap(),
-            smart_indent_symbols: toml.smart_indent_symbols.unwrap(),
+            newline_mode: fusion.newline_mode.unwrap(),
+            format_multiline_string_contents: fusion.format_multiline_string_contents.unwrap(),
+            fixed_indent_symbols: fusion.fixed_indent_symbols.unwrap(),
+            smart_indent_symbols: fusion.smart_indent_symbols.unwrap(),
         }
     }
 
-    fn from_toml_with_defaults(toml: TomlFusionConfig, defaults: FusionConfig) -> FusionConfig {
+    fn from_toml_with_defaults(toml: TomlFusionFile, defaults: FusionConfig) -> FusionConfig {
+        let fusion = toml.fusion;
         FusionConfig {
-            newline_mode: toml.newline_mode.unwrap_or(defaults.newline_mode),
-            format_multiline_string_contents: toml
+            newline_mode: fusion.newline_mode.unwrap_or(defaults.newline_mode),
+            format_multiline_string_contents: fusion
                 .format_multiline_string_contents
                 .unwrap_or(defaults.format_multiline_string_contents),
-            fixed_indent_symbols: toml.fixed_indent_symbols.unwrap_or(defaults.fixed_indent_symbols),
-            smart_indent_symbols: toml.smart_indent_symbols.unwrap_or(defaults.smart_indent_symbols),
+            fixed_indent_symbols: fusion.fixed_indent_symbols.unwrap_or(defaults.fixed_indent_symbols),
+            smart_indent_symbols: fusion.smart_indent_symbols.unwrap_or(defaults.smart_indent_symbols),
         }
     }
+}
+
+#[derive(Deserialize)]
+struct TomlFusionFile {
+    pub fusion: TomlFusionConfig,
 }
 
 /// TomlFusionConfig has every member as optional so that configs can
@@ -62,16 +68,7 @@ impl FusionConfig {
 const DEFAULT_CONFIG: &str = include_str!("configs/default.toml");
 
 pub fn new_default_config() -> FusionConfig {
-    FusionConfig::from_default_toml(
-        DEFAULT_CONFIG
-            .parse::<Value>()
-            .unwrap()
-            .get("fusion")
-            .unwrap()
-            .clone()
-            .try_into::<TomlFusionConfig>()
-            .unwrap(),
-    )
+    FusionConfig::from_default_toml(toml::from_str(DEFAULT_CONFIG).expect("well-formed default config"))
 }
 
 pub fn load_config(config_file_name: Option<&str>, silent: bool) -> Result<FusionConfig, Error> {
@@ -98,27 +95,12 @@ pub fn load_config(config_file_name: Option<&str>, silent: bool) -> Result<Fusio
         println!("Using config file {:?}...", config_path);
     }
 
-    let config_contents = std::fs::read_to_string(&config_path)
+    let config_contents = std::fs::read(&config_path)
         .map_err(|err| err_generic!("Failed to read config file {:?}: {}", config_file_name, err))?;
-    let config = config_contents
-        .parse::<Value>()
+    let config = toml::from_slice(&config_contents)
         .map_err(|err| err_generic!("Failed to parse config file: {:?}: {}", config_file_name, err))?;
 
-    let config = FusionConfig::from_toml_with_defaults(
-        config
-            .get("fusion")
-            .ok_or_else(|| err_generic!("Missing config 'fusion' top-level in {:?}", config_file_name))?
-            .clone()
-            .try_into::<TomlFusionConfig>()
-            .map_err(|err| {
-                err_generic!(
-                    "Failed to parse 'fusion' top-level config in {:?}: {}",
-                    config_file_name,
-                    err
-                )
-            })?,
-        default_config,
-    );
+    let config = FusionConfig::from_toml_with_defaults(config, default_config);
     if config.newline_mode != NEWLINE_MODE_NO_CHANGE && config.newline_mode != NEWLINE_MODE_FIX_UP {
         return Err(err_generic!(
             "Unknown newline mode in config: {}. Should be '{}' or '{}'",
