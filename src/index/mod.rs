@@ -21,8 +21,8 @@ pub fn load_index(fusion_config: &FusionConfig, package_path: &Path) -> Result<F
         paths.push(module_path);
     }
 
-    let fusion_index = FusionIndex::new(package_path.into(), paths)?;
-    let fusion_loader = FusionLoader::new(fusion_config, fusion_index.clone());
+    let fusion_index = FusionIndex::new(package_path, paths)?;
+    let fusion_loader = FusionLoader::new(fusion_config, &fusion_index);
     fusion_loader.load_configured_paths(fusion_config)?;
 
     Ok(fusion_index)
@@ -39,18 +39,18 @@ mod test {
     fn bootstrap_test() {
         let default_config = new_default_config();
         let fusion_index = FusionIndex::new(
-            PathBuf::from("./"),
+            &PathBuf::from("./"),
             vec![PathBuf::from("index_tests/bootstrap/test_files")],
         )
         .unwrap();
 
-        let fusion_loader = FusionLoader::new(&default_config, fusion_index.clone());
+        let fusion_loader = FusionLoader::new(&default_config, &fusion_index);
         if let Err(err) = fusion_loader.load_module_file("index_tests/bootstrap/test_files/some_mod.fusion") {
-            panic!("\n{}", err);
+            panic!("\n{err}");
         }
 
         let expected_repo = include_str!("../../index_tests/bootstrap/expected-repo.txt").trim();
-        let actual_repo = format!("{:#?}", fusion_index);
+        let actual_repo = format!("{fusion_index:#?}");
         if expected_repo != actual_repo {
             let msg = format!(
                 "\nIndexing index_tests/bootstrap/test_files failed:\n{}\n",

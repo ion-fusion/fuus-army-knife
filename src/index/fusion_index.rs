@@ -21,7 +21,7 @@ pub struct FusionIndex {
 }
 
 impl FusionIndex {
-    pub fn new(current_package_path: PathBuf, module_paths: Vec<PathBuf>) -> Result<FusionIndexCell, Error> {
+    pub fn new(current_package_path: &Path, module_paths: Vec<PathBuf>) -> Result<FusionIndexCell, Error> {
         let result = Rc::new(RefCell::new(FusionIndex {
             current_package_path: current_package_path
                 .canonicalize()
@@ -38,7 +38,7 @@ impl FusionIndex {
         }));
         println!("Module repository initialized with paths:");
         for path in &result.borrow().module_paths {
-            println!("  {:?}", path);
+            println!("  {}", path.display());
         }
         Ok(result)
     }
@@ -116,6 +116,7 @@ impl FusionIndex {
     }
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl fmt::Debug for FusionIndex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("FusionIndex")

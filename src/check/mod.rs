@@ -51,20 +51,20 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
 
                             // If the file is referenced by the index and is relevant to this package
                             if let Some(reference) = file_references.get(path) {
-                                let fusion_loader = FusionLoader::new(fusion_config, fusion_index.clone());
+                                let fusion_loader = FusionLoader::new(fusion_config, &fusion_index);
                                 match reference {
                                     // If it's a module file, reload it
                                     Reference::Module(name) => {
                                         match fusion_loader.reload_module_file(name.into(), path) {
                                             Ok(_) => youre_awesome(),
-                                            Err(err) => error_occurred(&current_package_path, path, err),
+                                            Err(err) => error_occurred(&current_package_path, path, &err),
                                         }
                                     }
                                     // If it's referenced by a bunch of scripts, reload all of them
                                     Reference::Scripts(names) => reload_scripts(&fusion_index, &fusion_loader, names),
                                 }
                             } else {
-                                println!("Ignoring change to {:?}", path);
+                                println!("Ignoring change to {}", path.display());
                             }
                         }
                         EventKind::Modify(ModifyKind::Name(_)) => {
@@ -95,7 +95,7 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
 
 fn reload_scripts(fusion_index: &FusionIndexCell, fusion_loader: &FusionLoader<'_>, names: &HashSet<String>) {
     let mut success = true;
-    for script_name in names.iter() {
+    for script_name in names {
         let (modules, globals, file_names) = {
             let fusion_index = fusion_index.borrow();
             let script_cell = fusion_index.get_script(script_name).unwrap();
@@ -118,7 +118,7 @@ fn reload_scripts(fusion_index: &FusionIndexCell, fusion_loader: &FusionLoader<'
                 break;
             }
         }
-        println!("Reloaded {}.", script_name);
+        println!("Reloaded {script_name}.");
     }
     if success {
         youre_awesome();
@@ -147,19 +147,23 @@ fn youre_awesome() {
         .unwrap_or_default();
     let message = AWESOME_MESSAGES[rindex];
     if message.len() < 15 {
-        println!("{}", format!("\n{}", message).color(Color::Blue));
+        println!("{}", format!("\n{message}").color(Color::Blue));
     } else {
         use colorful::HSL;
         println!(
             "{}",
-            format!("\n{}", message).gradient_with_color(HSL::new(0.0, 1.0, 0.5), HSL::new(0.833, 1.0, 0.5))
+            format!("\n{message}").gradient_with_color(HSL::new(0.0, 1.0, 0.5), HSL::new(0.833, 1.0, 0.5))
         );
     }
 }
 
-fn error_occurred(package_path: &Path, path: &Path, err: Error) {
+fn error_occurred(package_path: &Path, path: &Path, err: &Error) {
     let relative = path.strip_prefix(package_path).unwrap();
-    println!("{}\n{}\n", format!("\nError in {:?}:", relative).color(Color::Red), err);
+    println!(
+        "{}\n{}\n",
+        format!("\nError in {}:", relative.display()).color(Color::Red),
+        err
+    );
 }
 
 fn build_watch_paths(package_path: &Path, _config: &FusionConfig) -> Vec<PathBuf> {
