@@ -317,13 +317,13 @@ fn calculate_continuation_indent(config: &FusionConfig, exprs: &[Expr], next_ind
             if config.fixed_indent_symbols.contains(symbol_value) {
                 // Symbol configured to always use fixed indent
                 indent_type = IndentType::Fixed;
-            } else if config.smart_indent_symbols.contains(symbol_value) {
-                if let IndentType::EndOfOpeningSymbol(_) = indent_type {
-                    let newlines = exprs.count_newlines();
-                    if newlines > 3 {
-                        // Symbol configured to use fixed indent if it's long
-                        indent_type = IndentType::Fixed;
-                    }
+            } else if config.smart_indent_symbols.contains(symbol_value)
+                && let IndentType::EndOfOpeningSymbol(_) = indent_type
+            {
+                let newlines = exprs.count_newlines();
+                if newlines > 3 {
+                    // Symbol configured to use fixed indent if it's long
+                    indent_type = IndentType::Fixed;
                 }
             }
         } else if !first.is_sexpr() {

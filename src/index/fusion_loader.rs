@@ -187,35 +187,35 @@ impl<'i> FusionLoader<'i> {
 
     fn visit_sexpr(&self, processed: &mut ProcessedFile, sexpr: &ListData, quoted: bool) -> Result<(), Error> {
         let mut items = sexpr.item_iter();
-        if let Some(first_value) = items.next() {
-            if let Some(function_call) = first_value.symbol_value() {
-                let visit_items = &mut |first, rest| -> Result<(), Error> {
-                    self.visit_expr(processed, first, quoted)?;
-                    for item in rest {
-                        self.visit_expr(processed, item, quoted)?;
-                    }
-                    Ok(())
-                };
+        if let Some(first_value) = items.next()
+            && let Some(function_call) = first_value.symbol_value()
+        {
+            let visit_items = &mut |first, rest| -> Result<(), Error> {
+                self.visit_expr(processed, first, quoted)?;
+                for item in rest {
+                    self.visit_expr(processed, item, quoted)?;
+                }
+                Ok(())
+            };
 
-                if quoted {
-                    match function_call.as_str() {
-                        "unquote" => self.visit_unquote(processed, items)?,
-                        _ => visit_items(first_value, items)?,
-                    }
-                } else {
-                    match function_call.as_str() {
-                        "define" => self.visit_define(processed, items)?,
-                        "define_syntax" => self.visit_defpub(processed, items)?,
-                        "defpub" => self.visit_defpub(processed, items)?,
-                        "defpub_j" => self.visit_defpub(processed, items)?,
-                        "defpub_syntax" => self.visit_defpub(processed, items)?,
-                        "module" => self.visit_module(processed, sexpr.span, items)?,
-                        "provide" => self.visit_provide(processed, items)?,
-                        "quasiquote" => self.visit_quasiquote(processed, items)?,
-                        "quote" => {}
-                        "require" => self.visit_require(processed, items)?,
-                        _ => visit_items(first_value, items)?,
-                    }
+            if quoted {
+                match function_call.as_str() {
+                    "unquote" => self.visit_unquote(processed, items)?,
+                    _ => visit_items(first_value, items)?,
+                }
+            } else {
+                match function_call.as_str() {
+                    "define" => self.visit_define(processed, items)?,
+                    "define_syntax" => self.visit_defpub(processed, items)?,
+                    "defpub" => self.visit_defpub(processed, items)?,
+                    "defpub_j" => self.visit_defpub(processed, items)?,
+                    "defpub_syntax" => self.visit_defpub(processed, items)?,
+                    "module" => self.visit_module(processed, sexpr.span, items)?,
+                    "provide" => self.visit_provide(processed, items)?,
+                    "quasiquote" => self.visit_quasiquote(processed, items)?,
+                    "quote" => {}
+                    "require" => self.visit_require(processed, items)?,
+                    _ => visit_items(first_value, items)?,
                 }
             }
         }
@@ -267,18 +267,18 @@ impl<'i> FusionLoader<'i> {
 
     fn visit_require_sexpr(&self, processed: &mut ProcessedFile, sexpr: &ListData) -> Result<(), Error> {
         let mut items = sexpr.item_iter();
-        if let Some(first_value) = items.next() {
-            if let Some(function_call) = first_value.symbol_value() {
-                return match function_call.as_str() {
-                    "only_in" => self.visit_require_only_in(processed, sexpr.span, items),
-                    "prefix_in" => Err(err_spanned!(
-                        first_value.span(),
-                        "support for `(require (prefix_in ...))` is not implemented"
-                    )),
-                    "rename_in" => self.visit_require_rename_in(processed, sexpr.span, items),
-                    _ => Err(err_spanned!(first_value.span(), "invalid argument to require")),
-                };
-            }
+        if let Some(first_value) = items.next()
+            && let Some(function_call) = first_value.symbol_value()
+        {
+            return match function_call.as_str() {
+                "only_in" => self.visit_require_only_in(processed, sexpr.span, items),
+                "prefix_in" => Err(err_spanned!(
+                    first_value.span(),
+                    "support for `(require (prefix_in ...))` is not implemented"
+                )),
+                "rename_in" => self.visit_require_rename_in(processed, sexpr.span, items),
+                _ => Err(err_spanned!(first_value.span(), "invalid argument to require")),
+            };
         }
         Ok(())
     }
@@ -424,12 +424,11 @@ impl<'i> FusionLoader<'i> {
         if let Some(arg_list) = rest.next() {
             if let Some(name) = arg_list.symbol_value() {
                 processed.defined.insert(name.into(), arg_list.span());
-            } else if let Some(sexpr_value) = arg_list.sexpr_value() {
-                if let Some(first_arg) = sexpr_value.item_iter().next() {
-                    if let Some(name) = first_arg.symbol_value() {
-                        processed.defined.insert(name.into(), first_arg.span());
-                    }
-                }
+            } else if let Some(sexpr_value) = arg_list.sexpr_value()
+                && let Some(first_arg) = sexpr_value.item_iter().next()
+                && let Some(name) = first_arg.symbol_value()
+            {
+                processed.defined.insert(name.into(), first_arg.span());
             }
         }
         Ok(())
@@ -443,12 +442,11 @@ impl<'i> FusionLoader<'i> {
         if let Some(arg_list) = rest.next() {
             if let Some(name) = arg_list.symbol_value() {
                 processed.provides.insert(name.into(), arg_list.span());
-            } else if let Some(sexpr_value) = arg_list.sexpr_value() {
-                if let Some(first_arg) = sexpr_value.item_iter().next() {
-                    if let Some(name) = first_arg.symbol_value() {
-                        processed.provides.insert(name.into(), first_arg.span());
-                    }
-                }
+            } else if let Some(sexpr_value) = arg_list.sexpr_value()
+                && let Some(first_arg) = sexpr_value.item_iter().next()
+                && let Some(name) = first_arg.symbol_value()
+            {
+                processed.provides.insert(name.into(), first_arg.span());
             }
         }
         Ok(())
