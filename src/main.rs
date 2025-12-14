@@ -24,7 +24,7 @@ mod string_util;
 use crate::config::{FusionConfig, load_config, write_default_config};
 use crate::error::Error;
 use crate::file::{FusionFile, FusionFileContent};
-use clap::{Parser, Subcommand, ValueHint, command};
+use clap::{Parser, Subcommand, ValueHint};
 use std::env;
 use std::fs::{self, File};
 use std::io::Write;
