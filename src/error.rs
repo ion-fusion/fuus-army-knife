@@ -18,8 +18,8 @@ pub enum Error {
 impl Error {
     /// Converts a spanned error into a generic error
     pub fn resolve_spanned<P: AsRef<Path>>(self, file_name: P, file_contents: &str) -> Error {
-        use pest::error::{Error as PestError, ErrorVariant};
         use pest::Span;
+        use pest::error::{Error as PestError, ErrorVariant};
         match self {
             Error::Generic(msg) => Error::Generic(msg),
             Error::Spanned(span, msg) => {

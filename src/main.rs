@@ -21,10 +21,10 @@ mod parser;
 mod span;
 mod string_util;
 
-use crate::config::{load_config, write_default_config, FusionConfig};
+use crate::config::{FusionConfig, load_config, write_default_config};
 use crate::error::Error;
 use crate::file::{FusionFile, FusionFileContent};
-use clap::{command, Parser, Subcommand, ValueHint};
+use clap::{Parser, Subcommand, ValueHint, command};
 use std::env;
 use std::fs::{self, File};
 use std::io::Write;

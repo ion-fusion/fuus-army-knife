@@ -5,15 +5,14 @@ use crate::error::Error;
 use crate::index::{self, FusionIndexCell, FusionLoader};
 use colorful::{Color, Colorful};
 use notify_debouncer_full::{
-    new_debouncer,
+    Debouncer, FileIdCache, new_debouncer,
     notify::{
-        event::{DataChange, ModifyKind},
         EventKind, RecursiveMode, Watcher,
+        event::{DataChange, ModifyKind},
     },
-    Debouncer, FileIdCache,
 };
 use rand::distr::{Distribution, Uniform};
-use std::collections::{hash_map::Entry, HashMap, HashSet};
+use std::collections::{HashMap, HashSet, hash_map::Entry};
 use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
@@ -69,11 +68,15 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
                             }
                         }
                         EventKind::Modify(ModifyKind::Name(_)) => {
-                            println!("Proper handling of file renames is unimplemented. Restarting check-correctness-watch...");
+                            println!(
+                                "Proper handling of file renames is unimplemented. Restarting check-correctness-watch..."
+                            );
                             return Ok(true);
                         }
                         EventKind::Remove(_) => {
-                            println!("Proper handling of file deletions is unimplemented. Restarting check-correctness-watch...");
+                            println!(
+                                "Proper handling of file deletions is unimplemented. Restarting check-correctness-watch..."
+                            );
                             return Ok(true);
                         }
                         _ => {}
@@ -84,7 +87,7 @@ pub fn check_correctness_watch(fusion_config: &FusionConfig) -> Result<bool, Err
                 return Err(err_generic!(
                     "Unexpected error(s) encountered while listening on file system notifications:\n\t{:?}",
                     errors
-                ))
+                ));
             }
         }
     }

@@ -3,7 +3,7 @@
 use crate::ast::*;
 use crate::config::FusionConfig;
 use crate::error::Error;
-use crate::file::{find_files, FusionFile};
+use crate::file::{FusionFile, find_files};
 use crate::index::{FusionIndexCell, Module, ModuleCell, Origin, RequireForm, RequireType, Script, ScriptCell};
 use crate::span::ShortSpan;
 use std::borrow::Cow;
