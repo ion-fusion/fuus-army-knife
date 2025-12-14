@@ -151,7 +151,7 @@ fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) 
     let temp_file_path = fusion_file.file_name.with_extension("tmp-fuusak");
     let mut temp_file =
         File::create(&temp_file_path).unwrap_or_else(|err| bail!("Failed to create temp file: {}", err));
-    write!(temp_file, "{}", formatted).unwrap_or_else(|err| bail!("Failed to write to temp file: {}", err));
+    write!(temp_file, "{formatted}").unwrap_or_else(|err| bail!("Failed to write to temp file: {}", err));
 
     // Replace original file with temp file via rename
     fs::rename(&temp_file_path, &fusion_file.file_name).unwrap_or_else(|err| {
@@ -164,19 +164,19 @@ fn format_file_in_place(fusion_config: &FusionConfig, fusion_file: &FusionFile) 
 }
 
 fn checkstyle(fusion_config: &FusionConfig, file: &FusionFile) -> bool {
-    println!("Checking {:?}...", file.file_name);
+    println!("Checking {}...", file.file_name.display());
     let formatted = format::format(fusion_config, &file.ast);
     let expected = formatted.trim_end();
     let actual = file.contents.trim_end();
-    if expected != actual {
+    if expected == actual {
+        true
+    } else {
         println!(
-            "File {:?} doesn't adhere to correct style. See diff to correct below:",
-            file.file_name
+            "File {} doesn't adhere to correct style. See diff to correct below:",
+            file.file_name.display()
         );
         println!("{}", diff_util::human_diff_lines(actual, expected));
         false
-    } else {
-        true
     }
 }
 
@@ -190,7 +190,7 @@ fn subcommand_format_all(fusion_config: &FusionConfig) {
     let fusion_files =
         FusionFile::recursively_load_directory(fusion_config, "./").unwrap_or_else(|err| bail!("{}", err));
     for file in &fusion_files {
-        println!("Formatting {:?}...", file.file_name);
+        println!("Formatting {}...", file.file_name.display());
         format_file_in_place(fusion_config, file);
     }
 }
@@ -208,19 +208,19 @@ fn subcommand_checkstyle_all(fusion_config: &FusionConfig) {
             passed = false;
         }
     }
-    if !passed {
-        bail!("Checkstyle failed.")
+    if passed {
+        println!("All files adhere to correct style.");
     } else {
-        println!("All files adhere to correct style.")
+        bail!("Checkstyle failed.")
     }
 }
 
 fn subcommand_checkstyle(fusion_config: &FusionConfig, path: &str) {
     let file = FusionFile::load(fusion_config, path).unwrap_or_else(|err| bail!("{}", err));
-    if !checkstyle(fusion_config, &file) {
-        bail!("Checkstyle failed.")
+    if checkstyle(fusion_config, &file) {
+        println!("{path} adheres to correct style.");
     } else {
-        println!("{} adheres to correct style.", path)
+        bail!("Checkstyle failed.")
     }
 }
 
@@ -228,5 +228,5 @@ fn subcommand_format_server(fusion_config: &FusionConfig) {
     let file_content = FusionFileContent::load_stdin().unwrap_or_else(|err| bail!("{}", err));
     let file = file_content.parse(fusion_config).unwrap_or_else(|err| bail!("{}", err));
     let formatted = format::format(fusion_config, &file.ast);
-    print!("{}", formatted)
+    print!("{formatted}");
 }
