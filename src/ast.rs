@@ -268,12 +268,12 @@ impl Expr {
 
     pub fn attach_annotations(mut self: Expr, annotations: Vec<String>) -> Expr {
         match &mut self {
-            Expr::Atomic(ref mut data) => data.annotations = annotations,
-            Expr::Clob(ref mut data) => data.annotations = annotations,
-            Expr::List(ref mut data) => data.annotations = annotations,
-            Expr::MultilineString(ref mut data) => data.annotations = annotations,
-            Expr::SExpr(ref mut data) => data.annotations = annotations,
-            Expr::Struct(ref mut data) => data.annotations = annotations,
+            Expr::Atomic(data) => data.annotations = annotations,
+            Expr::Clob(data) => data.annotations = annotations,
+            Expr::List(data) => data.annotations = annotations,
+            Expr::MultilineString(data) => data.annotations = annotations,
+            Expr::SExpr(data) => data.annotations = annotations,
+            Expr::Struct(data) => data.annotations = annotations,
             _ => unreachable!(),
         }
         self
@@ -294,14 +294,14 @@ impl CountNewlines for &Expr {
     fn count_newlines(&self) -> usize {
         match *self {
             Expr::Atomic(_) => 0,
-            Expr::Clob(ref data) => data.count_newlines(),
-            Expr::CommentBlock(ref data) => data.value.len(),
+            Expr::Clob(data) => data.count_newlines(),
+            Expr::CommentBlock(data) => data.value.len(),
             Expr::CommentLine(_) => 1,
-            Expr::List(ref data) => data.count_newlines(),
-            Expr::MultilineString(ref data) => data.count_newlines(),
-            Expr::Newlines(ref data) => data.newline_count as usize,
-            Expr::SExpr(ref data) => data.count_newlines(),
-            Expr::Struct(ref data) => data.count_newlines(),
+            Expr::List(data) => data.count_newlines(),
+            Expr::MultilineString(data) => data.count_newlines(),
+            Expr::Newlines(data) => data.newline_count as usize,
+            Expr::SExpr(data) => data.count_newlines(),
+            Expr::Struct(data) => data.count_newlines(),
             Expr::StructKey(_) => 0,
         }
     }

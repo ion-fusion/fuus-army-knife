@@ -197,7 +197,7 @@ fn build_references(
                         entry.insert(Reference::Scripts(names));
                     }
                     Entry::Occupied(mut entry) => {
-                        if let Reference::Scripts(ref mut names) = entry.get_mut() {
+                        if let Reference::Scripts(names) = entry.get_mut() {
                             names.insert(script.name.clone());
                         }
                     }

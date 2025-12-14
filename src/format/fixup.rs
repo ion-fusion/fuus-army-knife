@@ -17,7 +17,7 @@ fn fixup_expr(mut expr: Expr) -> Expr {
             while i < data.items.len() {
                 let last_is_newlines = i == 0 || data.items[i - 1].is_newlines();
                 match &mut data.items[i] {
-                    SExpr(ref mut sub_data) | List(ref mut sub_data) | Struct(ref mut sub_data) => {
+                    SExpr(sub_data) | List(sub_data) | Struct(sub_data) => {
                         if fixup_list(&mut sub_data.items) && !last_is_newlines {
                             let newlines = Expr::Newlines(NewlinesData::new(sub_data.span, 1));
                             data.items.insert(i, newlines);
