@@ -56,10 +56,10 @@ fn fixup_list(items: &mut Vec<Expr>) -> bool {
     let should_add_preceding_newline = has_values && things_before_newline == 0;
 
     // Remove the very first newlines instance
-    if let Some(line) = items.first() {
-        if line.is_newlines() {
-            items.remove(0);
-        }
+    if let Some(line) = items.first()
+        && line.is_newlines()
+    {
+        items.remove(0);
     }
 
     // Remove trailing newlines if there's no comment
