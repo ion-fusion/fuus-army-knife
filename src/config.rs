@@ -49,7 +49,7 @@ struct TomlFusionFile {
     pub fusion: TomlFusionConfig,
 }
 
-/// TomlFusionConfig has every member as optional so that configs can
+/// `TomlFusionConfig` has every member as optional so that configs can
 /// be sparse and have defaults applied if values are not specified.
 #[derive(Deserialize)]
 struct TomlFusionConfig {
@@ -92,7 +92,7 @@ pub fn load_config(config_file_name: Option<&str>, silent: bool) -> Result<Fusio
         }
         return Ok(default_config);
     } else if !silent {
-        println!("Using config file {:?}...", config_path);
+        println!("Using config file {}...", config_path.display());
     }
 
     let config_contents = std::fs::read(&config_path)
@@ -117,7 +117,7 @@ pub fn write_default_config() -> Result<(), Error> {
     use std::io::Write;
 
     let mut file = File::create("fuusak.toml").map_err(|err| err_generic!("{}", err))?;
-    write!(file, "{}", DEFAULT_CONFIG).map_err(|err| err_generic!("{}", err))?;
+    write!(file, "{DEFAULT_CONFIG}").map_err(|err| err_generic!("{}", err))?;
     println!("Wrote default config to fuusak.toml");
     Ok(())
 }
