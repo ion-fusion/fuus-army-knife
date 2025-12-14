@@ -5,7 +5,7 @@ use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::parser;
 use regex::{Captures, Regex};
-use std::fs::read_to_string;
+use std::fs::{FileType, read_to_string};
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
@@ -20,7 +20,7 @@ impl FusionFile {
     pub fn empty_file() -> FusionFile {
         FusionFile {
             file_name: PathBuf::from("empty"),
-            contents: "".into(),
+            contents: String::new(),
             ast: Vec::new(),
         }
     }
@@ -54,12 +54,12 @@ pub fn find_files<P: AsRef<Path>>(path: P, desired_extension: &str) -> Result<Ve
     let mut fusion_files: Vec<PathBuf> = Vec::new();
     let directory_walker = ignore::WalkBuilder::new(path.as_ref())
         .follow_links(true)
-        .sort_by_file_path(|a, b| a.cmp(b))
+        .sort_by_file_path(Ord::cmp)
         .build();
     for entry in directory_walker {
         let entry = entry.map_err(|err| err_generic!("Failed to read input file: {}", err))?;
         let path = entry.path();
-        if !entry.file_type().map(|file_type| file_type.is_dir()).unwrap_or(true)
+        if !entry.file_type().as_ref().is_none_or(FileType::is_dir)
             && path.as_os_str().to_string_lossy().ends_with(desired_extension)
         {
             fusion_files.push(path.into());
