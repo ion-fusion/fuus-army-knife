@@ -1,6 +1,9 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use crate::ast::*;
+use crate::ast::{
+    AtomicData, AtomicType, ClobData, ClobExpr, Expr, ListData, MultilineStringData, NewlinesData,
+    NonAnnotatedStringData, NonAnnotatedStringListData,
+};
 use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::lexer::{FPair, FPairs, FusionLexer, Rule};
@@ -90,7 +93,7 @@ fn block_comment_lines(comment: &str) -> Vec<String> {
         .collect()
 }
 
-fn visit_comment(pair: FPair<'_>) -> ParseResult {
+fn visit_comment(pair: &FPair<'_>) -> ParseResult {
     // Unfortunately, Pest strips out all the useful information for comments,
     // so re-parse the comment without the implicit comment rule
     let comment = pair.as_span().as_str();
@@ -110,10 +113,10 @@ fn visit_comment(pair: FPair<'_>) -> ParseResult {
     }
 }
 
-fn attach_annotations(exprs: Vec<Expr>, annotations: Vec<String>) -> Vec<Expr> {
+fn attach_annotations(exprs: Vec<Expr>, annotations: &[String]) -> Vec<Expr> {
     exprs
         .into_iter()
-        .map(|expr| expr.attach_annotations(annotations.clone()))
+        .map(|expr| expr.attach_annotations(annotations.to_owned()))
         .collect()
 }
 
@@ -125,10 +128,10 @@ fn visit_expr<'i>(pair: FPair<'i>, config: &FusionConfig) -> ParseResult {
         let annotation_pair = pairs.pop().unwrap();
         Ok(attach_annotations(
             visit_pair(expr_pair, config)?,
-            annotation_pair
+            &annotation_pair
                 .into_inner()
                 .map(|ap| ap.as_span().as_str().to_string())
-                .collect(),
+                .collect::<Vec<_>>(),
         ))
     } else {
         // [expression]
@@ -190,11 +193,17 @@ fn visit_structure(pair: FPair<'_>, config: &FusionConfig) -> ParseResult {
     result!(Struct, ListData::new(span.into(), Vec::new(), sub_exprs))
 }
 
-fn visit_whitespace(pair: FPair<'_>) -> ParseResult {
+fn visit_whitespace(pair: &FPair<'_>) -> ParseResult {
     let span = pair.as_span();
     let newline_count = count_newlines(span.as_str());
     if newline_count > 0 {
-        return result!(Newlines, NewlinesData::new(span.into(), newline_count as u16));
+        return result!(
+            Newlines,
+            NewlinesData::new(
+                span.into(),
+                u16::try_from(newline_count).map_err(|_| err_spanned!(span.into(), "Too many newlines to visit"))?
+            )
+        );
     }
     Ok(Vec::new())
 }
@@ -204,7 +213,7 @@ fn visit_pair(pair: FPair<'_>, config: &FusionConfig) -> ParseResult {
         Rule::blob => visit_blob(pair),
         Rule::boolean => atomic!(AtomicType::Boolean, pair),
         Rule::clob => visit_clob(pair, config),
-        Rule::COMMENT => visit_comment(pair),
+        Rule::COMMENT => visit_comment(&pair),
         Rule::expr => visit_expr(pair, config),
         Rule::integer => atomic!(AtomicType::Integer, pair),
         Rule::list => visit_list(pair, config),
@@ -217,7 +226,7 @@ fn visit_pair(pair: FPair<'_>, config: &FusionConfig) -> ParseResult {
         Rule::struct_member => visit_pairs(pair.into_inner(), config),
         Rule::symbol => atomic!(AtomicType::Symbol, pair),
         Rule::timestamp => atomic!(AtomicType::Timestamp, pair),
-        Rule::WHITESPACE => visit_whitespace(pair),
+        Rule::WHITESPACE => visit_whitespace(&pair),
         Rule::EOI => Ok(Vec::new()),
 
         // Unreachable rules separated out so that if we add a new rule, we don't forget to edit this function
