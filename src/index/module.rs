@@ -1,5 +1,6 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+use derive_new::new;
 use fuusak::file::FusionFile;
 use fuusak::span::ShortSpan;
 use std::cell::RefCell;

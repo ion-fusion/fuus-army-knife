@@ -4,6 +4,7 @@ use crate::ast::Expr;
 use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::parser;
+use derive_new::new;
 use regex::{Captures, Regex};
 use std::fs::{FileType, read_to_string};
 use std::io::{self, Read};

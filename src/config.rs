@@ -1,6 +1,7 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 use crate::error::Error;
+use serde::Deserialize;
 use std::path::PathBuf;
 
 const NEWLINE_MODE_NO_CHANGE: &str = "no-change";

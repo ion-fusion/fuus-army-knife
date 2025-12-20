@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::span::ShortSpan;
 use crate::string_util::count_newlines;
+use derive_new::new;
 use std::fmt;
 
 pub trait CountNewlines {
