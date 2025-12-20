@@ -1,9 +1,9 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use crate::config::FusionConfig;
-use crate::error::Error;
 use crate::index::{self, FusionIndexCell, FusionLoader};
 use colorful::{Color, Colorful};
+use fuusak::config::FusionConfig;
+use fuusak::error::Error;
 use notify_debouncer_full::{
     Debouncer, FileIdCache, new_debouncer,
     notify::{

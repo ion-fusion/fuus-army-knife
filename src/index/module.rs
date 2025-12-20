@@ -1,7 +1,7 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use crate::file::FusionFile;
-use crate::span::ShortSpan;
+use fuusak::file::FusionFile;
+use fuusak::span::ShortSpan;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::fmt::{self, Debug};

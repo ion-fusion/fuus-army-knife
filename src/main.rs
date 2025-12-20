@@ -2,29 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 #[macro_use]
 extern crate derive_new;
-#[macro_use]
-extern crate serde_derive;
 
+#[macro_use]
+mod bin_error_macro;
 #[macro_use]
 mod error_macro;
 
-mod ast;
 mod check;
-mod config;
-mod diff_util;
-mod error;
-mod file;
-mod format;
 mod index;
-mod lexer;
-mod parser;
-mod span;
-mod string_util;
 
-use crate::config::{FusionConfig, load_config, write_default_config};
-use crate::error::Error;
-use crate::file::{FusionFile, FusionFileContent};
 use clap::{Parser, Subcommand, ValueHint};
+use fuusak::config::{FusionConfig, load_config, write_default_config};
+use fuusak::error::Error;
+use fuusak::file::{FusionFile, FusionFileContent};
+use fuusak::{diff_util, format};
 use std::env;
 use std::fs::{self, File};
 use std::io::Write;

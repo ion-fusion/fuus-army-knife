@@ -1,7 +1,7 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use crate::config::FusionConfig;
-use crate::error::Error;
+use fuusak::config::FusionConfig;
+use fuusak::error::Error;
 use std::path::Path;
 
 mod fusion_index;
@@ -31,8 +31,8 @@ pub fn load_index(fusion_config: &FusionConfig, package_path: &Path) -> Result<F
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::new_default_config;
     use crate::diff_util::human_diff_lines;
+    use fuusak::config::new_default_config;
     use std::path::PathBuf;
 
     #[test]

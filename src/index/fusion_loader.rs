@@ -1,11 +1,11 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use crate::ast::{AtomicType, Expr, ListData};
-use crate::config::FusionConfig;
-use crate::error::Error;
-use crate::file::{FusionFile, find_files};
 use crate::index::{FusionIndexCell, Module, ModuleCell, Origin, RequireForm, RequireType, Script, ScriptCell};
-use crate::span::ShortSpan;
+use fuusak::ast::{AtomicType, Expr, ListData};
+use fuusak::config::FusionConfig;
+use fuusak::error::Error;
+use fuusak::file::{FusionFile, find_files};
+use fuusak::span::ShortSpan;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
