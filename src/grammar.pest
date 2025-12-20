@@ -105,4 +105,4 @@ structure = { "{" ~ struct_member_list? ~ "}" }
 
 expr = { annotations? ~ (null | list | structure | clob | blob | boolean | timestamp | real | integer | sexpr | string | symbol) }
 
-file = { SOI ~ (expr)* ~ EOI }
+script = { SOI ~ (expr)* ~ EOI }

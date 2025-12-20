@@ -15,10 +15,13 @@ use std::path::Path;
 pub type ParseResult = Result<Vec<Expr>, Error>;
 
 pub fn parse<P: AsRef<Path>>(file_name: P, source: &str, config: &FusionConfig) -> ParseResult {
+    parse_str(source, config).map_err(|error| err_generic!("{}{}", file_name.as_ref().display(), error))
+}
+
+pub fn parse_str(source: &str, config: &FusionConfig) -> ParseResult {
     // FusionParser::parse converts the string into a token stream using the grammar in grammar.pest.
     // The visit_pairs method then converts that token stream into the AST.
-    let parse_result = FusionLexer::parse(Rule::file, source)
-        .map_err(|error| err_generic!("{}{}", file_name.as_ref().display(), error));
+    let parse_result = FusionLexer::parse(Rule::script, source);
     visit_pairs(parse_result?.next().unwrap().into_inner(), config)
 }
 
@@ -238,7 +241,7 @@ fn visit_pair(pair: FPair<'_>, config: &FusionConfig) -> ParseResult {
         | Rule::BLOB_INNER_CHAR
         | Rule::block_comment
         | Rule::DECIMAL_INT
-        | Rule::file
+        | Rule::script
         | Rule::HEX_INT
         | Rule::line_comment
         | Rule::LONG_STRING
