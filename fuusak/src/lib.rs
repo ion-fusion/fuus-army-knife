@@ -1,6 +1,3 @@
-#[macro_use]
-mod error_macro;
-
 pub mod ast;
 pub mod config;
 pub mod diff_util;

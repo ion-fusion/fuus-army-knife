@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #[macro_use]
 mod bin_error_macro;
-#[macro_use]
-mod error_macro;
 
 mod check;
 mod index;
@@ -13,6 +11,7 @@ use fuusak::config::{FusionConfig, load_config, write_default_config};
 use fuusak::error::Error;
 use fuusak::file::{FusionFile, FusionFileContent};
 use fuusak::{diff_util, format};
+use fuusak_err_macro::err_generic;
 use std::env;
 use std::fs::{self, File};
 use std::io::Write;

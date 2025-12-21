@@ -9,6 +9,7 @@ use crate::error::Error;
 use crate::lexer::{FPair, FPairs, FusionLexer, Rule};
 use crate::span::ShortSpan;
 use crate::string_util::count_newlines;
+use fuusak_err_macro::{err_generic, err_spanned};
 use pest::Parser;
 use std::path::Path;
 

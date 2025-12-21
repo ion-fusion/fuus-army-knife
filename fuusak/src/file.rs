@@ -5,6 +5,7 @@ use crate::config::FusionConfig;
 use crate::error::Error;
 use crate::parser;
 use derive_new::new;
+use fuusak_err_macro::err_generic;
 use regex::{Captures, Regex};
 use std::fs::{FileType, read_to_string};
 use std::io::{self, Read};

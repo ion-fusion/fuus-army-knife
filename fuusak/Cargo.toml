@@ -1,0 +1,17 @@
+[package]
+name = "fuusak"
+edition = "2024"
+
+version = "0.1.0"
+
+[dependencies]
+colorful = "0.3"
+diff = "0.1"
+fuusak-err-macro = { path = "../err_macro" }
+derive-new = { workspace = true }
+ignore = "0.4"
+pest = "2.1"
+pest_derive = "2.1"
+regex = "1"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.9"

@@ -4,6 +4,7 @@ use crate::index::{self, FusionIndexCell, FusionLoader};
 use colorful::{Color, Colorful};
 use fuusak::config::FusionConfig;
 use fuusak::error::Error;
+use fuusak_err_macro::err_generic;
 use notify_debouncer_full::{
     Debouncer, FileIdCache, new_debouncer,
     notify::{
