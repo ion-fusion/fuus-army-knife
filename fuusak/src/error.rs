@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::lexer::Rule;
 use crate::span::ShortSpan;
+use fuusak_err_macro::err_generic;
 use std::fmt;
 use std::fmt::Display;
 use std::path::Path;

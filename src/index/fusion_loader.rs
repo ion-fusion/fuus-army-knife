@@ -6,6 +6,7 @@ use fuusak::config::FusionConfig;
 use fuusak::error::Error;
 use fuusak::file::{FusionFile, find_files};
 use fuusak::span::ShortSpan;
+use fuusak_err_macro::{err_generic, err_spanned};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

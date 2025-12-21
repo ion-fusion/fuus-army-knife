@@ -1,0 +1,3 @@
+[package]
+name = "fuusak-err-macro"
+edition = "2024"

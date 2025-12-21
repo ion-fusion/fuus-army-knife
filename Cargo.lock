@@ -249,19 +249,34 @@ dependencies = [
 name = "fuusak"
 version = "0.1.0"
 dependencies = [
- "clap",
  "colorful",
  "derive-new",
  "diff",
+ "fuusak-err-macro",
  "ignore",
- "notify-debouncer-full",
  "pest",
  "pest_derive",
- "rand",
  "regex",
  "serde",
  "toml",
 ]
+
+[[package]]
+name = "fuusak-cli"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "colorful",
+ "derive-new",
+ "fuusak",
+ "fuusak-err-macro",
+ "notify-debouncer-full",
+ "rand",
+]
+
+[[package]]
+name = "fuusak-err-macro"
+version = "0.0.0"
 
 [[package]]
 name = "generic-array"

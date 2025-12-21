@@ -3,6 +3,7 @@
 use crate::index::{Module, ModuleCell, ScriptCell};
 use fuusak::error::Error;
 use fuusak::file::FusionFile;
+use fuusak_err_macro::err_generic;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::fmt;

@@ -1,6 +1,7 @@
 // Copyright Ion Fusion contributors. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 use crate::error::Error;
+use fuusak_err_macro::err_generic;
 use serde::Deserialize;
 use std::path::PathBuf;
 
